@@ -9,7 +9,7 @@ import sys
 import socket
 import utils
 
-def main(scheduler_name = None, daemonize = False):
+def main(scheduler_name = None, daemonize = False, tcp = None):
     path_here = os.path.dirname(os.path.realpath(__file__))
     conf_file = open(os.path.join(path_here,"mupys.conf"),'r')
     conf = conf_file.readlines()
@@ -20,13 +20,13 @@ def main(scheduler_name = None, daemonize = False):
 
     if(scheduler_name == None):
         scheduler_name = socket.gethostname()
-        
-        
-        pscheduler = protoScheduler.ProtoScheduler(scheduler_name, conf_path, 
+
+    pscheduler = protoScheduler.ProtoScheduler(scheduler_name, conf_path, 
         socket_path, 
         logs_path,
         2, 
-        init = True)
+        init = True,
+        tcp = tcp)
     
     pscheduler.start(daemonize)  
 
@@ -52,9 +52,17 @@ if(__name__ == '__main__'):
         help    = "If the scheduler should be started as a daemon."
     )
     
+    parser.add_option("-t", "--tcp-mode",
+        type    =  "string",
+        default = None,
+        action  = "store",
+        dest    = "tcp",
+        help    = "Tcp mode, the paramter is the tcp address."
+    )
+    
     (options, args) = parser.parse_args() 
     
-    main(options.scheduler_name, options.daemonize) 
+    main(options.scheduler_name, options.daemonize, options.tcp) 
     
     
     

@@ -93,13 +93,19 @@ class ProtoScheduler(Daemon):
         logs_path              ,
         n_proc_limit       =  4, 
         time_limit         = -1,
-        init               = False):
+        init               = False,
+        tcp                = None):
         
         
         self.scheduler_name = scheduler_name
         self.configure_file = os.path.join(conf_path, scheduler_name+".conf")
         self.log_output = ""
         self.hold_output = True
+        self.tcp_mode = False
+        self.tcp_address = ""
+        if(tcp != None):
+            self.tcp_mode = True
+            self.tcp_address = tcp
         if(os.path.isfile(self.configure_file)):
             self.log("Found configure file, loading configuration")
             conf_file = open(self.configure_file,'r')
@@ -174,14 +180,23 @@ class ProtoScheduler(Daemon):
         state = pickle.load(open(self.statistics_file))
         self.queue = state["queue"]
         self.finished_jobs = state["finished"]
-        self.id_count = state["id_count"] 
+        self.id_count = state["id_count"]
+        self.tcp_mode = state["tcp_mode"]
 #___________________________________________________________________________________________________
     def init_sockets(self):
         self.log("Initilizing sockets")
         self.context = zmq.Context()
         self.client_socket = self.context.socket(zmq.REP)
         self.job_socket = self.context.socket(zmq.REP)
-        self.client_socket.bind("ipc://"+self.client_socket_name)
+        
+        if(self.tcp_mode):
+            self.log("Binding to socket: %s"%"tcp://"+self.tcp_address)
+            self.client_socket.bind("tcp://"+self.tcp_address)
+            
+        else:
+            self.log("Binding to socket: %s"%"ipc://"+self.client_socket_name)
+            self.client_socket.bind("ipc://"+self.client_socket_name)
+        print(self.job_socket_name)
         self.job_socket.bind("ipc://"+self.job_socket_name)
 
 #___________________________________________________________________________________________________
@@ -489,6 +504,7 @@ class ProtoScheduler(Daemon):
         stat["queue"] = self.queue
         stat["finished"] = self.finished_jobs
         stat["id_count"] = self.id_count
+        stat["tcp_mode"] = self.tcp_mode
         pickle.dump(stat, open(self.statistics_file, 'wb'))
         
         
@@ -599,12 +615,10 @@ def job_process(socket_name, job_description):
     # redirect standard file descriptors to log files
     sys.stdout.flush()
     sys.stderr.flush()
-    #si = file(self.stdin, 'r')
     
     so = file(job_description.log_out, 'w')
     se = file(job_description.log_err, 'w')
     
-    #os.dup2(si.fileno(), sys.stdin.fileno())
     os.dup2(so.fileno(), sys.stdout.fileno())
     os.dup2(se.fileno(), sys.stderr.fileno())
     print("Entering Job Wrapper")

@@ -24,7 +24,8 @@ class Client(object):
         self.conf_path = utils.parse(conf,"conf_path")
         self.conf_path_client = utils.parse(conf,"conf_path_client")
         self.state_file = os.path.join(self.conf_path_client, self.client_name+".pkl")
-        
+        self.tcp_mode = False
+        self.tcp_address = ""
         self.load_state()
         
         self.configure_file = os.path.join(self.conf_path, self.current_scheduler+".conf")
@@ -33,7 +34,9 @@ class Client(object):
         self.available_schedulers = None   
         self.load_state()
         self.pre_cmd =  {'cs'          :self.pre_cmd_change_sch,
-                         'as'          :self.pre_cmd_get_available_sch}
+                         'as'          :self.pre_cmd_get_available_sch,
+                            'tcp-mode'    :self.cmd_mode,
+                            'tcp-addr'    :self.cmd_addr}
         
         self.commands = {'q'           :self.cmd_print_queue,
                         'stop'        :self.cmd_stop,
@@ -43,7 +46,9 @@ class Client(object):
                         'avgload'     :self.cmd_avg_load,
                         'submit-jdf'  :self.cmd_submit_jdf,
                         'which'       :self.cmd_which,
-                        'n-proc'      :self.cmd_cn_proc}
+                        'n-proc'      :self.cmd_cn_proc,
+                       
+                        }
 #___________________________________________________________________________________________________
     def load_state(self):
         '''Loads the previus state of the client
@@ -55,15 +60,23 @@ class Client(object):
             return
         state = pickle.load(open(self.state_file))
         self.current_scheduler = state["current_scheduler"]
+        self.tcp_mode = state["tcp_mode"]
+        self.tcp_address = state["tcp_address"]
 #___________________________________________________________________________________________________
     def save_state(self):
         state = dict()
         state["current_scheduler"] = self.current_scheduler
-        
+        state["tcp_mode"] = self.tcp_mode
+        state["tcp_address"] = self.tcp_address
         pickle.dump(state, open(self.state_file, 'wb'))
 #___________________________________________________________________________________________________
     def initialize_socket(self):
-        self.scheduler_client = protoScheduler.ProtoSchedulerClient(os.path.join("ipc://"+self.socket_path,self.current_scheduler))
+        print(self.tcp_mode)
+        print(self.tcp_address)
+        if(self.tcp_mode):
+            self.scheduler_client = protoScheduler.ProtoSchedulerClient("tcp://"+self.tcp_address)
+        else:
+            self.scheduler_client = protoScheduler.ProtoSchedulerClient(os.path.join("ipc://"+self.socket_path,self.current_scheduler))
         #print(os.path.join("ipc://"+self.socket_path,self.current_scheduler))
 #___________________________________________________________________________________________________
     def test_connection(self):
@@ -75,7 +88,7 @@ class Client(object):
         for fn in file_list:
             socket_name = re.match(file_name_format, fn)
             if(socket_name != None):
-            print( socket_name.group("name"))
+                print( socket_name.group("name"))
 #___________________________________________________________________________________________________
     def cmd_cn_proc(self, arg,opt):
         self.scheduler_client.change_nproc_limit(int(opt[0]))
@@ -145,12 +158,22 @@ class Client(object):
         if(use_env == "true"):
             env = os.environ
         else:
-        env = None
+            env = None
         
         self.scheduler_client.submit_job_description(exe, args , out , err, "Unknown", env)
 #___________________________________________________________________________________________________
     def cmd_which(self, arg, opt):
         print(self.current_scheduler)
+#___________________________________________________________________________________________________
+    def cmd_mode(self, arg, opt):
+        print(opt)
+        if(opt[0] == "on"):
+            self.tcp_mode = True
+        else:
+            self.tcp_mode = False
+#___________________________________________________________________________________________________       
+    def cmd_addr(self, arg, opt):
+            self.tcp_address = opt[0]
         
 def main(command, options, socket_name):
     client = Client()
