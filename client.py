@@ -74,7 +74,7 @@ class Client(object):
         print(self.tcp_mode)
         print(self.tcp_address)
         if(self.tcp_mode):
-            self.scheduler_client = protoScheduler.ProtoSchedulerClient("tcp://"+self.tcp_address)
+            self.scheduler_client = protoScheduler.ProtoSchedulerClient("tcp://"+self.tcp_address,True)
         else:
             self.scheduler_client = protoScheduler.ProtoSchedulerClient(os.path.join("ipc://"+self.socket_path,self.current_scheduler))
         #print(os.path.join("ipc://"+self.socket_path,self.current_scheduler))

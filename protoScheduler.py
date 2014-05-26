@@ -512,14 +512,20 @@ class ProtoScheduler(Daemon):
 #===================================================================================================
 #++++++Class: ProtoSchedulerClient++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-
+from zmq import ssh
 class ProtoSchedulerClient(object):
-    def __init__(self, socket_name):
+    
+    def __init__(self, socket_name, tcp = False):
         self.socket_name = socket_name
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)
-        self.socket.connect(self.socket_name)
-        self.socket.setsockopt(zmq.LINGER, 0)
+        if(tcp):
+            self.tunnel = ssh.tunnel_connection(self.socket, "tcp://127.0.0.1:5555","lap-flis.physto.se")
+            self.socket.setsockopt(zmq.LINGER, 0)
+        else:
+            self.socket.connect(self.socket_name)
+            self.socket.setsockopt(zmq.LINGER, 0)
+        
         self.poller = zmq.Poller()      
         self.poller.register(self.socket, zmq.POLLIN)
 #___________________________________________________________________________________________________    
