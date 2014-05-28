@@ -29,15 +29,15 @@ class PMLSServer(Daemon):
     '''
     
     
-    PMLSconf = collections.namedtuple("PMLSconf","tcp_addr, tcp_port, logs_path, n_proc_limit, time_limit, load_state")
+    PMLSconf = collections.namedtuple("PMLSconf","tcp_addr, tcp_port, logs_path, n_proc_limit, time_limit, load_state, socket_path")
     
     def __init__(self, 
         scheduler_name         ,
         conf_path              ,
         conf = None
         ):
-        
-        self.host
+        import socket
+        self.host = socket.gethostname()
         self.scheduler_name = scheduler_name
         self.configure_file = os.path.join(conf_path, scheduler_name+".conf")
         
@@ -63,8 +63,10 @@ class PMLSServer(Daemon):
                 print("No previous configuration found or given. Please provide PMLS configuration")
                 return
             self.log("No previous configuration. Generating default configuration...")
-            self.n_proc_limit = n_proc_limit
-            self.proc_time_limit = time_limit
+            self.n_proc_limit = conf.n_proc_limit
+            self.proc_time_limit = conf.time_limit
+            logs_path = conf.logs_path
+            socket_path = conf.socket_path
             init = False
             f = open(self.configure_file,'w')
             f.write("#Micro python scheduler configuration file \n")
@@ -132,8 +134,8 @@ class PMLSServer(Daemon):
         self.context = zmq.Context()
         self.client_socket = self.context.socket(zmq.REP)
         self.job_socket = self.context.socket(zmq.REP)
-        self.log("Binding to client socket: tcp://%s:%s"%(self.tcp_address,self.tcp_port))
-        self.client_socket.bind("tcp://%s:%s"%(self.tcp_address,self.tcp_port))            
+        self.log("Binding to client socket: tcp://%s:%s"%(self.tcp_addr,self.tcp_port))
+        self.client_socket.bind("tcp://%s:%s"%(self.tcp_addr,self.tcp_port))            
         self.log("Binding to jobb socket: ipc://"+self.job_socket_name)
         self.job_socket.bind("ipc://"+self.job_socket_name)
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import protoScheduler
+import server
 import utils
 
 from optparse import OptionParser
@@ -10,7 +10,7 @@ import sys
 import socket
 
 
-def main(scheduler_name = None, daemonize = False, tcp = None):
+def main(scheduler_name = None, daemonize = False, new = False):
     path_here = os.path.dirname(os.path.realpath(__file__))
     conf_file = open(os.path.join(path_here,"mupys.conf"),'r')
     conf = conf_file.readlines()
@@ -21,13 +21,17 @@ def main(scheduler_name = None, daemonize = False, tcp = None):
 
     if(scheduler_name == None):
         scheduler_name = socket.gethostname()
-
-    pscheduler = protoScheduler.ProtoScheduler(scheduler_name, conf_path, 
-        socket_path, 
-        logs_path,
-        2, 
-        init = True,
-        tcp = tcp)
+    if(new):
+        configuration =  server.PMLSServer.PMLSconf(socket_path = socket_path,
+                                logs_path = logs_path,
+                                n_proc_limit = 2,
+                                time_limit = -1,
+                                load_state = True,
+                                tcp_addr = "127.0.0.1",
+                                tcp_port = "5555")
+    else:
+        configuration = None
+    pscheduler = server.PMLSServer(scheduler_name, conf_path, configuration)
     
     pscheduler.start(daemonize)  
 
@@ -53,6 +57,12 @@ if(__name__ == '__main__'):
         help    = "If the scheduler should be started as a daemon."
     )
     
+    parser.add_option("-n", "--new",
+        action  = "store_true",
+        dest    = "new",
+        help    = "."
+    )
+    
     parser.add_option("-t", "--tcp-mode",
         type    =  "string",
         default = None,
@@ -63,7 +73,7 @@ if(__name__ == '__main__'):
     
     (options, args) = parser.parse_args() 
     
-    main(options.scheduler_name, options.daemonize, options.tcp) 
+    main(options.scheduler_name, options.daemonize, options.new) 
     
     
     
