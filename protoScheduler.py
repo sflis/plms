@@ -20,64 +20,64 @@ class Job(object):
     and to keep some statistics about it.
     '''
     def __init__(self, id, cmd, submit_time, user, log_out='/dev/null', log_err='/dev/null', env = None):
-	self.id=id
-	self.cmd = cmd
-	self.status = "idle"
-	self.submit_time = submit_time
-	self.start_time = 0
-	self.end_time = 0
-	self.cpu_time = 0
-	self.user = user
-	self.log_out=log_out
-	self.log_err=log_err
-	self.env = env
-	
-	
+        self.id=id
+        self.cmd = cmd
+        self.status = "idle"
+        self.submit_time = submit_time
+        self.start_time = 0
+        self.end_time = 0
+        self.cpu_time = 0
+        self.user = user
+        self.log_out=log_out
+        self.log_err=log_err
+        self.env = env
+        
+        
 class Message(object):
     def __init__(self, command = None, options = None, user = None):
         self.msg = dict()
         self.msg['command'] = command
         if(isinstance(options,list) or options == None): 
-	    self.msg['options'] = options
-	else:
-	    self.msg['options'] = [options]
+            self.msg['options'] = options
+        else:
+            self.msg['options'] = [options]
         self.msg['user'] = user
         self.cmd = command
         self.opt = options
         self.user = user
         self.raw_msg = None
     def compose(self):
-	self.raw_msg = pickle.dumps(self.msg) 
-	return self.raw_msg
+        self.raw_msg = pickle.dumps(self.msg) 
+        return self.raw_msg
     
     def check_sanity(self, add_keys = None):
-	std_keys = ['command','options','user']
-	if(add_keys != None):
-	    std_keys.append(add_keys)
-	for k in std_keys:
-	    if(k not in self.msg.keys()):
-		raise ValueError("Key '%s' not present in message."%k)
-	    
+        std_keys = ['command','options','user']
+        if(add_keys != None):
+            std_keys.append(add_keys)
+        for k in std_keys:
+            if(k not in self.msg.keys()):
+                raise ValueError("Key '%s' not present in message."%k)
+            
     def decompose(self, msg):
-	self.raw_msg = msg
-	self.msg = pickle.loads(msg)
-	self.check_sanity()
-	self.cmd = self.msg['command']
-	self.opt = self.msg['options']
-	self.user = self.msg['user']
-	return self.msg
+        self.raw_msg = msg
+        self.msg = pickle.loads(msg)
+        self.check_sanity()
+        self.cmd = self.msg['command']
+        self.opt = self.msg['options']
+        self.user = self.msg['user']
+        return self.msg
 
 class RetMessage(object):
     def __init__(self, name = None, host = None , status = None):
-	self.msg = dict()
-	self.name = name
-	self.host = host
-	self.status = status
-	self.composed = None
+        self.msg = dict()
+        self.name = name
+        self.host = host
+        self.status = status
+        self.composed = None
     def composte(self):
-	self.composed  = pickle.dumps(self)
+        self.composed  = pickle.dumps(self)
     def decompose(self, msg):
-	self = pickle.loads(msg)
+        self = pickle.loads(msg)
     
 #===================================================================================================
 #++++++Class: ProtoScheduler++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -627,7 +627,6 @@ def job_process(socket_name, job_description):
     
     os.dup2(so.fileno(), sys.stdout.fileno())
     os.dup2(se.fileno(), sys.stderr.fileno())
-    print("Entering Job Wrapper")
     
 #    print(job_description.env)
     #setting the enviroment for the job

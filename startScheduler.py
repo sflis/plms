@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
 import protoScheduler
+import utils
 
 from optparse import OptionParser
 from os.path import expandvars
 import os
 import sys
 import socket
-import utils
+
 
 def main(scheduler_name = None, daemonize = False, tcp = None):
     path_here = os.path.dirname(os.path.realpath(__file__))

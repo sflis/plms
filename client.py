@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
  
-import protoScheduler
+from SchedulerClient import SchedulerClient
 
 from optparse import OptionParser
 from os.path import expandvars
@@ -73,11 +73,7 @@ class Client(object):
     def initialize_socket(self):
         print(self.tcp_mode)
         print(self.tcp_address)
-        if(self.tcp_mode):
-            self.scheduler_client = protoScheduler.ProtoSchedulerClient("tcp://"+self.tcp_address,True)
-        else:
-            self.scheduler_client = protoScheduler.ProtoSchedulerClient(os.path.join("ipc://"+self.socket_path,self.current_scheduler))
-        #print(os.path.join("ipc://"+self.socket_path,self.current_scheduler))
+        self.scheduler_client = SchedulerClient("tcp://"+self.tcp_address,True)
 #___________________________________________________________________________________________________
     def test_connection(self):
         pass
