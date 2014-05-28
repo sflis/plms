@@ -11,27 +11,29 @@ import socket
 import utils
 import pickle
 import re
+import collections
+
 class Client(object):
+    SchedulerInfo = collections.namedtuple("SchedulerInfo","name, tcp_addr, tcp_port,host")
     def __init__(self):
         path_here = os.path.dirname(os.path.realpath(__file__))
         self.client_name =  "client_"+socket.gethostname()
         self.scheduler_client = None     
         
-        
         self.conf_file = open(os.path.join(path_here,"mupys.conf"),'r')
+        
         conf = self.conf_file.readlines()
-        self.socket_path = utils.parse(conf,"socket_path")
         self.conf_path = utils.parse(conf,"conf_path")
         self.conf_path_client = utils.parse(conf,"conf_path_client")
         self.state_file = os.path.join(self.conf_path_client, self.client_name+".pkl")
-        self.tcp_mode = False
         self.tcp_address = ""
+        self.current_scheduler = None
+        self.available_schedulers = None  
         self.load_state()
         
         self.configure_file = os.path.join(self.conf_path, self.current_scheduler+".conf")
         
-        self.current_scheduler = None
-        self.available_schedulers = None   
+ 
         self.load_state()
         self.pre_cmd =  {'cs'          :self.pre_cmd_change_sch,
                          'as'          :self.pre_cmd_get_available_sch,
@@ -79,12 +81,13 @@ class Client(object):
         pass
 #___________________________________________________________________________________________________
     def pre_cmd_get_available_sch(self,arg, opt):
-        file_list = os.listdir(self.socket_path)
-        file_name_format = r'mpls_client_(?P<name>[\w\-.]+)'
-        for fn in file_list:
-            socket_name = re.match(file_name_format, fn)
-            if(socket_name != None):
-                print( socket_name.group("name"))
+        pass
+        #file_list = os.listdir(self.socket_path)
+        #file_name_format = r'mpls_client_(?P<name>[\w\-.]+)'
+        #for fn in file_list:
+            #socket_name = re.match(file_name_format, fn)
+            #if(socket_name != None):
+                #print( socket_name.group("name"))
 #___________________________________________________________________________________________________
     def cmd_cn_proc(self, arg,opt):
         self.scheduler_client.change_nproc_limit(int(opt[0]))

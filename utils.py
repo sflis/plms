@@ -105,7 +105,7 @@ class Job(object):
         
 #=====================================================================================================        
 class Message(object):
-    def __init__(self, command = None, options = None, user = None):
+    def __init__(self, command = None, options = None,  user = None, host = None):
         self.msg = dict()
         self.msg['command'] = command
         if(isinstance(options,list) or options == None): 
@@ -116,6 +116,7 @@ class Message(object):
         self.cmd = command
         self.opt = options
         self.user = user
+        self.host = host
         self.raw_msg = None
     def compose(self):
         self.raw_msg = pickle.dumps(self.msg) 
