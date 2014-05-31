@@ -3,6 +3,8 @@ import sys
 import zmq
 from zmq import ssh
 import pickle
+import socket
+import time
 
 from utils import Message
 from utils import RetMessage
@@ -15,10 +17,13 @@ class SchedulerClient(object):
     def __init__(self, url,tcp_port, local=True):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)
+        print(url)
+        print(tcp_port)
         if(local):
             self.socket.connect("tcp://127.0.0.1:%s"%tcp_port)
         else:
-            self.tunnel = ssh.tunnel_connection(self.socket, "tcp://127.0.0.1:%s"%tcp_port, url)
+            server_name = url.split("@")[0]+"@"+socket.gethostbyname(url.split("@")[1])
+            self.tunnel = ssh.tunnel_connection(self.socket,"tcp://127.0.0.1:%s"%tcp_port, server_name)
         self.socket.setsockopt(zmq.LINGER, 0)
         
         self.poller = zmq.Poller()      
@@ -92,7 +97,14 @@ class SchedulerClient(object):
 #___________________________________________________________________________________________________
     def get_avg_load(self, user = ""):
         msg = Message('AVG_LOAD', '', user)
-        return self.send_msg(msg.compose())
+        return self.send_msg(msg.compose())    
+#___________________________________________________________________________________________________
+    def ping(self, user = ""):
+        msg = Message('PING', '', user)
+        start_time = time.time()
+        rec = self.send_msg(msg.compose()).split()
+        finish_time = time.time()
+        return (rec[1],rec[2],finish_time-start_time)
 #___________________________________________________________________________________________________    
     def remove_jobs(self, ids = None, user = "Unknown"):    
         

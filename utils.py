@@ -1,5 +1,13 @@
 import os
+import sys
 import pickle
+from time import gmtime, strftime
+from datetime import datetime
+import time
+import zmq
+from subprocess import call
+import subprocess
+from multiprocessing import Process
 
 #function to create directory that check if the directory alread have been created.
 def ensure_dir(f):
@@ -41,7 +49,7 @@ def job_process(socket_name, job_description):
     os.dup2(so.fileno(), sys.stdout.fileno())
     os.dup2(se.fileno(), sys.stderr.fileno())
     
-#    print(job_description.env)
+    #print(job_description.env)
     #setting the enviroment for the job
     if(job_description.env != None):
         #import os
@@ -49,16 +57,17 @@ def job_process(socket_name, job_description):
 
     if(job_description.env == None):
         job_description.env = os.environ
+   
     # launch the job
     failed = False
     try:
         start_time = time.time()
         return_code = subprocess.call(job_description.cmd, shell=True)
-
     except:
         failed = True
         return_code = -1
-    print(return_code)
+    print("Return code: %d"%return_code)
+
     cpu_time = time.clock()
     finish_time = time.time()
     if(return_code !=0):

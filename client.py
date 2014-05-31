@@ -12,6 +12,7 @@ import utils
 import pickle
 import re
 import collections
+
 SchedulerInfo = collections.namedtuple("SchedulerInfo","name, tcp_addr, tcp_port, host")
 class Client(object):
     
@@ -48,6 +49,7 @@ class Client(object):
                         'submit-jdf'  :self.cmd_submit_jdf,
                         'which'       :self.cmd_which,
                         'n-proc'      :self.cmd_cn_proc,
+                        'ping'        :self.cmd_ping
                         }
 #___________________________________________________________________________________________________
     def load_state(self):
@@ -127,7 +129,7 @@ class Client(object):
         if(options == None):
             print("Must pass a command to submit")
         else:
-            return_msg = self.scheduler_client.submit_simple_jobs([" ".join(options)],env = os.environ)
+            return_msg = self.scheduler_client.submit_simple_jobs([" ".join(options)], env = os.environ)
             print(return_msg)
         if(return_msg.find("FAIL")>=0):
             print("Submition failed")
@@ -140,6 +142,12 @@ class Client(object):
         else:
             joblist = open(opt[0],'r').readlines()
             self.scheduler_client.submit_simple_jobs(joblist, env = os.environ)	
+            
+#___________________________________________________________________________________________________
+    def cmd_ping(self,arg, opt):
+        (name,host,dt) = self.scheduler_client.ping()
+        print("Ping: %f"%dt)
+        print("Host: %s, Name: %s"%(host,name))
 #___________________________________________________________________________________________________
     def cmd_submit_jdf(self, arg, opt):
         jdf_file = open(opt[0],'r')
@@ -172,8 +180,6 @@ def main(command, options):
     if(command in client.pre_cmd.keys()):
         client.pre_cmd[command](None, options)
         inpre = True
-        #client.save_state()
-        #return
     
     
     if(command in client.commands.keys()):

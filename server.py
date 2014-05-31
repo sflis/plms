@@ -20,6 +20,7 @@ from utils import job_process
 from utils import Job
 from utils import Message
 from utils import RetMessage
+from utils import parse
 
 #===================================================================================================
 #++++++Class: Server++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -109,7 +110,8 @@ class PMLSServer(Daemon):
                          'CONFIGURE'    :self.command_CONFIGURE,
                          'REMOVE_JOBS'  :self.command_REMOVE_JOBS,
                          'STOP'         :self.command_STOP,
-                         'AVG_LOAD'     :self.command_AVG_LOAD
+                         'AVG_LOAD'     :self.command_AVG_LOAD,
+                         'PING'         :self.command_PING
                          }
         
         if(init):
@@ -201,6 +203,13 @@ class PMLSServer(Daemon):
             self.log("Stopping scheduler gently.")
         else:
             return_msg = "FAIL\n"
+        return return_msg
+    
+#___________________________________________________________________________________________________
+    def command_PING(self, msg):
+        return_msg = "SUCCESS\n"
+        return_msg +=self.scheduler_name+"\n"
+        return_msg +=self.host+"\n"
         return return_msg
 #___________________________________________________________________________________________________
     def recv_commands(self):
@@ -368,9 +377,7 @@ class PMLSServer(Daemon):
         for j in list(self.jobs):
             if(j.id in ids):
                 pass
-        
-        
-        
+              
 #___________________________________________________________________________________________________    
     def shuffle_queue(self):
         pass
@@ -403,9 +410,9 @@ class PMLSServer(Daemon):
                     #print(self.job_finish_status)
                     #print(j[1].end_time)
                     j[1].status = "finished"
-                    j[1].end_time = parse(s[1], "End time")
-                    j[1].start_time = parse(s[1], "Start time")
-                    j[1].cpu_time = parse(s[1], "CPU time")
+                    j[1].end_time = float(parse(s[1], "End time"))
+                    j[1].start_time = float(parse(s[1], "Start time"))
+                    j[1].cpu_time = float(parse(s[1], "CPU time"))
                     self.finished_jobs.append(j[1])
                     self.jobs.remove(j)
                     self.job_finish_status.remove(s)
