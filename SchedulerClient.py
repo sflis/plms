@@ -2,6 +2,7 @@ import os
 import sys
 import zmq
 from zmq import ssh
+import pickle
 
 from utils import Message
 from utils import RetMessage
@@ -11,15 +12,18 @@ from utils import RetMessage
 
 class SchedulerClient(object):
     
-    def __init__(self, url,tcp_port):
-        self.socket_name = socket_name
+    def __init__(self, url,tcp_port, local=True):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)
-        self.tunnel = ssh.tunnel_connection(self.socket, "tcp://127.0.0.1:%s"%tcp_port, url)
+        if(local):
+            self.socket.connect("tcp://127.0.0.1:%s"%tcp_port)
+        else:
+            self.tunnel = ssh.tunnel_connection(self.socket, "tcp://127.0.0.1:%s"%tcp_port, url)
         self.socket.setsockopt(zmq.LINGER, 0)
         
         self.poller = zmq.Poller()      
         self.poller.register(self.socket, zmq.POLLIN)
+        print("Connected")
 #___________________________________________________________________________________________________    
     def send_msg(self, msg):
 

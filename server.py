@@ -66,6 +66,8 @@ class PMLSServer(Daemon):
             self.log("No previous configuration. Generating default configuration...")
             self.n_proc_limit = conf.n_proc_limit
             self.proc_time_limit = conf.time_limit
+            self.tcp_addr = conf.tcp_addr
+            self.tcp_port = conf.tcp_port
             logs_path = conf.logs_path
             socket_path = conf.socket_path
             init = False
@@ -317,7 +319,7 @@ class PMLSServer(Daemon):
         s = (tot_running_time-d*(24*3600)-h*3600-m*60)
         running_time_str = "%02dd  %02d:%02d:%05.2fh"%(d,h,m,s)
         printed_queue += "idle jobs: %d, running jobs: %d, total run time: %s\n"%(len(self.queue),len(self.jobs),running_time_str)
-        printed_queue += "On: %s"%self.scheduler_name
+        printed_queue += "Scheduler: %s,     Host: %s"%(self.scheduler_name,self.host)
         return printed_queue
 
 #___________________________________________________________________________________________________    

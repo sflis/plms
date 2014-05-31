@@ -12,9 +12,9 @@ import utils
 import pickle
 import re
 import collections
-
+SchedulerInfo = collections.namedtuple("SchedulerInfo","name, tcp_addr, tcp_port, host")
 class Client(object):
-    SchedulerInfo = collections.namedtuple("SchedulerInfo","name, tcp_addr, tcp_port,host")
+    
     def __init__(self):
         path_here = os.path.dirname(os.path.realpath(__file__))
         self.client_name =  "client_"+socket.gethostname()
@@ -26,19 +26,18 @@ class Client(object):
         self.conf_path = utils.parse(conf,"conf_path")
         self.conf_path_client = utils.parse(conf,"conf_path_client")
         self.state_file = os.path.join(self.conf_path_client, self.client_name+".pkl")
-        self.tcp_address = ""
         self.current_scheduler = None
-        self.available_schedulers = None  
+        self.available_schedulers = dict()  
         self.load_state()
         
-        self.configure_file = os.path.join(self.conf_path, self.current_scheduler+".conf")
+        self.configure_file = os.path.join(self.conf_path, self.current_scheduler.name+".conf")
         
  
         self.load_state()
         self.pre_cmd =  {'cs'          :self.pre_cmd_change_sch,
                          'as'          :self.pre_cmd_get_available_sch,
-                            'tcp-mode'    :self.cmd_mode,
-                            'tcp-addr'    :self.cmd_addr}
+                         'add-remote'  :self.cmd_add_remote
+                         }
         
         self.commands = {'q'           :self.cmd_print_queue,
                         'stop'        :self.cmd_stop,
@@ -49,7 +48,6 @@ class Client(object):
                         'submit-jdf'  :self.cmd_submit_jdf,
                         'which'       :self.cmd_which,
                         'n-proc'      :self.cmd_cn_proc,
-                       
                         }
 #___________________________________________________________________________________________________
     def load_state(self):
@@ -62,32 +60,30 @@ class Client(object):
             return
         state = pickle.load(open(self.state_file))
         self.current_scheduler = state["current_scheduler"]
-        self.tcp_mode = state["tcp_mode"]
-        self.tcp_address = state["tcp_address"]
+        self.available_schedulers = state["available_schedulers"]
+        
 #___________________________________________________________________________________________________
     def save_state(self):
         state = dict()
         state["current_scheduler"] = self.current_scheduler
-        state["tcp_mode"] = self.tcp_mode
-        state["tcp_address"] = self.tcp_address
+        state["available_schedulers"] = self.available_schedulers 
         pickle.dump(state, open(self.state_file, 'wb'))
 #___________________________________________________________________________________________________
     def initialize_socket(self):
-        print(self.tcp_mode)
-        print(self.tcp_address)
-        self.scheduler_client = SchedulerClient("tcp://"+self.tcp_address,True)
+        s = "%s:%s"%(self.current_scheduler.tcp_addr,self.current_scheduler.name)
+        s = self.available_schedulers[s]
+        if(s.tcp_addr  == "127.0.0.1"):
+            self.scheduler_client = SchedulerClient(s.tcp_addr,s.tcp_port)
+        else:
+            self.scheduler_client = SchedulerClient(s.tcp_addr,s.tcp_port, local = False)
 #___________________________________________________________________________________________________
     def test_connection(self):
         pass
 #___________________________________________________________________________________________________
     def pre_cmd_get_available_sch(self,arg, opt):
-        pass
-        #file_list = os.listdir(self.socket_path)
-        #file_name_format = r'mpls_client_(?P<name>[\w\-.]+)'
-        #for fn in file_list:
-            #socket_name = re.match(file_name_format, fn)
-            #if(socket_name != None):
-                #print( socket_name.group("name"))
+        print("here")
+        for k in self.available_schedulers.keys():
+            print("%30s | %s"%(k,self.available_schedulers[k]))
 #___________________________________________________________________________________________________
     def cmd_cn_proc(self, arg,opt):
         self.scheduler_client.change_nproc_limit(int(opt[0]))
@@ -96,7 +92,7 @@ class Client(object):
         print(self.scheduler_client.get_avg_load())
 #___________________________________________________________________________________________________
     def pre_cmd_change_sch(self,arg, opt):
-        self.current_scheduler = "mpls_client_"+opt[0]
+        self.current_scheduler = self.available_schedulers[opt[0]]
 #___________________________________________________________________________________________________
     def cmd_print_queue(self,arg, opt):
         if(opt == None):
@@ -164,24 +160,24 @@ class Client(object):
     def cmd_which(self, arg, opt):
         print(self.current_scheduler)
 #___________________________________________________________________________________________________
-    def cmd_mode(self, arg, opt):
-        print(opt)
-        if(opt[0] == "on"):
-            self.tcp_mode = True
-        else:
-            self.tcp_mode = False
-#___________________________________________________________________________________________________       
-    def cmd_addr(self, arg, opt):
-            self.tcp_address = opt[0]
+    def cmd_add_remote(self, arg, opt):
+        addr = opt[1].split(':')
+        sinfo = SchedulerInfo(opt[0],addr[0],addr[1],"")
+        self.available_schedulers[addr[0]+":"+opt[0]] = sinfo
         
-def main(command, options, socket_name):
+        
+def main(command, options):
     client = Client()
     inpre = False
     if(command in client.pre_cmd.keys()):
         client.pre_cmd[command](None, options)
         inpre = True
-    client.initialize_socket()
+        #client.save_state()
+        #return
+    
+    
     if(command in client.commands.keys()):
+        client.initialize_socket()
         client.commands[command](None, options)
     else:
         if(not inpre):
@@ -213,7 +209,7 @@ if(__name__ == '__main__'):
         
     (optionss, args) = parser.parse_args() 
     path_here = os.path.dirname(os.path.realpath(__file__))
-    main(command, options, "ipc://"+ path_here+"/.socket/mpls_client_") 
+    main(command, options) 
     
     
     
