@@ -12,7 +12,7 @@ import socket
 
 def main(scheduler_name = None, daemonize = False, new = False, port='5555'):
     path_here = os.path.dirname(os.path.realpath(__file__))
-    conf_file = open(os.path.join(path_here,"mupys.conf"),'r')
+    conf_file = open(os.path.join(path_here,"plms.conf"),'r')
     conf = conf_file.readlines()
     
     socket_path = utils.parse(conf,"socket_path")

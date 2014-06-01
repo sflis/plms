@@ -32,11 +32,12 @@ def main(setup_type):
         create_dir(os.path.join(path_here,".conf/schedulers/"))
         create_dir(os.path.join(path_here,".conf/clients/"))
         create_dir(os.path.join(path_here,"bin/"))
-        os.symlink(os.path.join(path_here,"client.py"), os.path.join(path_here, "bin","plms"))
-        os.symlink(os.path.join(path_here,"startScheduler.py"), os.path.join(path_here, "bin","start-plms"))
+
         
         f = open((os.path.join(path_here,"plms.conf")),'w')
         create_default_conf(f, os.path.join(path_here,".socket"), os.path.join(path_here,"logs"), os.path.join(path_here,".conf/schedulers"),os.path.join(path_here,".conf/clients"))
+        os.symlink(os.path.join(path_here,"client.py"), os.path.join(path_here, "bin","plms"))
+        os.symlink(os.path.join(path_here,"startScheduler.py"), os.path.join(path_here, "bin","start-plms"))
         print('Finish the setup by putting this line in your bashrc: export PATH="%s:$PATH"'%os.path.join(path_here,"bin/"))
     else:
         print("No other setup supported yet")

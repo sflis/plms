@@ -90,9 +90,9 @@ class PMLSServer(Daemon):
             stderr=conf_path+"/"+scheduler_name+".log"
         )
         
-        self.client_socket_name = socket_path+"/mpls_client_"+scheduler_name
-        self.job_socket_name = socket_path+"/mpls_job_"+scheduler_name
-        self.statistics_file = conf_path+"/mpls_stat_"+scheduler_name+".pkl"
+        self.client_socket_name = socket_path+"/pmls_client_"+scheduler_name
+        self.job_socket_name = socket_path+"/pmls_job_"+scheduler_name
+        self.statistics_file = conf_path+"/pmls_stat_"+scheduler_name+".pkl"
         
         self.default_log_path = os.path.join(logs_path,scheduler_name+'/')
         utils.ensure_dir(self.default_log_path)
