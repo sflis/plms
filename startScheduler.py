@@ -66,7 +66,7 @@ if(__name__ == '__main__'):
     parser.add_option("-p", "--port",
         action  = "store",
         type    = "string",
-         default = None,
+        default = '5555',
         dest    = "port",
         help    = "."
     )
@@ -74,6 +74,6 @@ if(__name__ == '__main__'):
     
     (options, args) = parser.parse_args() 
     
-    main(options.scheduler_name, options.daemonize, options.new,options.port) 
+    main(options.scheduler_name, options.daemonize, options.new, options.port) 
     
     

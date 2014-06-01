@@ -21,7 +21,7 @@ class Client(object):
         self.client_name =  "client_"+socket.gethostname()
         self.scheduler_client = None     
         
-        self.conf_file = open(os.path.join(path_here,"mupys.conf"),'r')
+        self.conf_file = open(os.path.join(path_here,"plms.conf"),'r')
         
         conf = self.conf_file.readlines()
         self.conf_path = utils.parse(conf,"conf_path")
@@ -30,14 +30,12 @@ class Client(object):
         self.current_scheduler = None
         self.available_schedulers = dict()  
         self.load_state()
-        
-        self.configure_file = os.path.join(self.conf_path, self.current_scheduler.name+".conf")
-        
  
         self.load_state()
         self.pre_cmd =  {'cs'          :self.pre_cmd_change_sch,
                          'as'          :self.pre_cmd_get_available_sch,
-                         'add-remote'  :self.cmd_add_remote
+                         'add-remote'  :self.cmd_add_remote,
+                         'which'       :self.cmd_which,
                          }
         
         self.commands = {'q'           :self.cmd_print_queue,
@@ -47,7 +45,7 @@ class Client(object):
                         'submit-list' :self.cmd_submit_list,
                         'avgload'     :self.cmd_avg_load,
                         'submit-jdf'  :self.cmd_submit_jdf,
-                        'which'       :self.cmd_which,
+                        
                         'n-proc'      :self.cmd_cn_proc,
                         'ping'        :self.cmd_ping
                         }
@@ -57,8 +55,9 @@ class Client(object):
         '''
         if(not os.path.isfile(self.state_file)):
             print("No state file found...")
-            print("Falling back to hostname scheduler:'%s'"%socket.gethostname())
-            self.current_scheduler = "mpls_client_"+socket.gethostname()
+            print("Falling back to local a scheduler:'%s'"%socket.gethostname())
+            self.current_scheduler = SchedulerInfo(socket.gethostname(),"127.0.0.1","5555",socket.gethostname())
+            self.available_schedulers["%s:%s"%(self.current_scheduler.tcp_addr,self.current_scheduler.name)] = self.current_scheduler   
             return
         state = pickle.load(open(self.state_file))
         self.current_scheduler = state["current_scheduler"]
@@ -166,7 +165,10 @@ class Client(object):
         self.scheduler_client.submit_job_description(exe, args , out , err, "Unknown", env)
 #___________________________________________________________________________________________________
     def cmd_which(self, arg, opt):
-        print(self.current_scheduler)
+        if(self.current_scheduler != None):
+            print(self.current_scheduler)
+        else:
+            print("No current scheduler")
 #___________________________________________________________________________________________________
     def cmd_add_remote(self, arg, opt):
         addr = opt[1].split(':')

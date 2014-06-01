@@ -12,7 +12,7 @@ def create_dir(f):
 
 def create_default_conf(f, socket_path, logs_path, conf_path_sch, conf_path_client):
     
-    f.write("#Master configure file for mupys created by setup.py\n")
+    f.write("#Master configure file for plms created by setup.py\n")
     f.write("socket_path:                                 %s\n"%socket_path)
     f.write("logs_path:                                   %s\n"%logs_path)
     f.write("conf_path:                                   %s\n"%conf_path_sch)
@@ -32,10 +32,10 @@ def main(setup_type):
         create_dir(os.path.join(path_here,".conf/schedulers/"))
         create_dir(os.path.join(path_here,".conf/clients/"))
         create_dir(os.path.join(path_here,"bin/"))
-        os.symlink(os.path.join(path_here,"client.py"), os.path.join(path_here, "bin","mpls"))
-        os.symlink(os.path.join(path_here,"startScheduler.py"), os.path.join(path_here, "bin","start-mpls"))
+        os.symlink(os.path.join(path_here,"client.py"), os.path.join(path_here, "bin","plms"))
+        os.symlink(os.path.join(path_here,"startScheduler.py"), os.path.join(path_here, "bin","start-plms"))
         
-        f = open((os.path.join(path_here,"mupys.conf")),'w')
+        f = open((os.path.join(path_here,"plms.conf")),'w')
         create_default_conf(f, os.path.join(path_here,".socket"), os.path.join(path_here,"logs"), os.path.join(path_here,".conf/schedulers"),os.path.join(path_here,".conf/clients"))
         print('Finish the setup by putting this line in your bashrc: export PATH="%s:$PATH"'%os.path.join(path_here,"bin/"))
     else:
