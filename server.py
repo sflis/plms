@@ -46,7 +46,7 @@ class PMLSServer(Daemon):
         self.log_output = ""
         self.hold_output = True
         
-        if(os.path.isfile(self.configure_file)):
+        if(os.path.isfile(self.configure_file) and conf != None):
             self.log("Found configure file, loading configuration")
             conf_file = open(self.configure_file,'r')
             conf = conf_file.readlines()

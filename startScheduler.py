@@ -31,6 +31,7 @@ def main(scheduler_name = None, daemonize = False, new = False, port='5555'):
                                 tcp_port = port)
     else:
         configuration = None
+        
     pscheduler = server.PMLSServer(scheduler_name, conf_path, configuration)
     
     pscheduler.start(daemonize)  
@@ -60,7 +61,8 @@ if(__name__ == '__main__'):
     parser.add_option("-n", "--new",
         action  = "store_true",
         dest    = "new",
-        help    = "."
+        help    = "If a scheduler is started for the first time then configuration can be provided by the "+\
+                  "command line or use defaults. Using -n also overrides the preavious configuration with the one from the command line."
     )
     
     parser.add_option("-p", "--port",
@@ -68,7 +70,7 @@ if(__name__ == '__main__'):
         type    = "string",
         default = '5555',
         dest    = "port",
-        help    = "."
+        help    = "This is the port which the scheduler should listen to."
     )
     
     

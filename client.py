@@ -145,7 +145,7 @@ class Client(object):
 #___________________________________________________________________________________________________
     def cmd_ping(self,arg, opt):
         (name,host,dt) = self.scheduler_client.ping()
-        print("Ping: %f"%dt)
+        print("Ping: %s,  %fms"%(self.current_scheduler.tcp_addr,dt*1e3))
         print("Host: %s, Name: %s"%(host,name))
 #___________________________________________________________________________________________________
     def cmd_submit_jdf(self, arg, opt):

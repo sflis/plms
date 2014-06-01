@@ -17,8 +17,6 @@ class SchedulerClient(object):
     def __init__(self, url,tcp_port, local=True):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)
-        print(url)
-        print(tcp_port)
         if(local):
             self.socket.connect("tcp://127.0.0.1:%s"%tcp_port)
         else:
@@ -28,7 +26,6 @@ class SchedulerClient(object):
         
         self.poller = zmq.Poller()      
         self.poller.register(self.socket, zmq.POLLIN)
-        print("Connected")
 #___________________________________________________________________________________________________    
     def send_msg(self, msg):
 
