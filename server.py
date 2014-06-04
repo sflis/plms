@@ -159,7 +159,9 @@ class PMLSServer(Daemon):
     def command_REQUEST_QUEUE(self, msg):
         return_msg = "SUCCESS\n"
         return_msg += "SENDING_LIST\n"
-        return_msg += self.print_queue(msg.opt[0])
+        opt = msg.opt[0]
+        fmt_str = msg.opt[1] if(len(msg.opt)>1) else None
+        return_msg += self.print_queue(msg.opt[0], fmt_str)
         return return_msg
 #___________________________________________________________________________________________________
     def command_CONFIGURE(self, msg):
@@ -284,51 +286,66 @@ class PMLSServer(Daemon):
         self.id_count +=1
         
 #___________________________________________________________________________________________________
-    def print_queue(self, opt):
+    def print_queue(self, opt, format_str = None):
         self.log("Printing queue with opt %s"%opt)
         now = time.time()
         tot_running_time = 0
-        printed_queue="    ID     STATUS       SUBMITED            RUNNING TIME         CMD\n"
-        if(opt.find("R") >= 0):
-            for j in self.jobs:
-                run_time = now - j[1].start_time
-                d = int(run_time/(24*3600))
-                h = int((run_time-d*(24*3600))/3600)
-                m = int((run_time-d*(24*3600)-h*3600)/60)
-                s = (run_time-d*(24*3600)-h*3600-m*60)
-                running_time_str = "%02dd  %02d:%02d:%05.2fh"%(d,h,m,s)
-                printed_queue += "  %06d:%10s: %s : %s : %s\n"%(j[1].id, j[1].status, time.strftime("%Y-%m-%d %H:%M:%S",j[1].submit_time), running_time_str, j[1].cmd[:15])
-                tot_running_time +=run_time  
-        if(opt.find("Q") >= 0):
-            for j in self.queue:
-                printed_queue += "  %06d:%10s: %s :                   : %s\n"%(j.id,j.status, time.strftime("%Y-%m-%d %H:%M:%S",j.submit_time),j.cmd[:15])
-        if(opt.find("F") >= 0):
-            for j in self.finished_jobs:
-                
-                if(opt.find("U")>=0):
-                    if(math.isnan(j.cpu_time)):
-                        run_time = 0
+        if(format_str == None):
+            printed_queue="    ID     STATUS       SUBMITED            RUNNING TIME         CMD\n"
+            if(opt.find("R") >= 0):
+                for j in self.jobs:
+                    run_time = now - j[1].start_time
+                    d = int(run_time/(24*3600))
+                    h = int((run_time-d*(24*3600))/3600)
+                    m = int((run_time-d*(24*3600)-h*3600)/60)
+                    s = (run_time-d*(24*3600)-h*3600-m*60)
+                    running_time_str = "%02dd  %02d:%02d:%05.2fh"%(d,h,m,s)
+                    printed_queue += "  %06d:%10s: %s : %s : %s\n"%(j[1].id, j[1].status, time.strftime("%Y-%m-%d %H:%M:%S",j[1].submit_time), running_time_str, j[1].cmd[:15])
+                    tot_running_time +=run_time  
+            if(opt.find("Q") >= 0):
+                for j in self.queue:
+                    printed_queue += "  %06d:%10s: %s :                   : %s\n"%(j.id,j.status, time.strftime("%Y-%m-%d %H:%M:%S",j.submit_time),j.cmd[:15])
+            if(opt.find("F") >= 0):
+                for j in self.finished_jobs:
+                    
+                    if(opt.find("U")>=0):
+                        if(math.isnan(j.cpu_time)):
+                            run_time = 0
+                        else:
+                            run_time = j.cpu_time
                     else:
-                        run_time = j.cpu_time
-                else:
-                    run_time = j.end_time - j.start_time
+                        run_time = j.end_time - j.start_time
+                    
+                    d = int(run_time/(24*3600))
+                    h = int((run_time-d*(24*3600))/3600)
+                    m = int((run_time-d*(24*3600)-h*3600)/60)
+                    s = (run_time-d*(24*3600)-h*3600-m*60)
+                    running_time_str = "%02dd  %02d:%02d:%05.2fh"%(d,h,m,s)
+                    printed_queue += "  %06d:%10s: %s : %s : %s\n"%(j.id, j.status, time.strftime("%Y-%m-%d %H:%M:%S",j.submit_time), running_time_str, j.cmd[:15])
+                    tot_running_time +=run_time
                 
-                d = int(run_time/(24*3600))
-                h = int((run_time-d*(24*3600))/3600)
-                m = int((run_time-d*(24*3600)-h*3600)/60)
-                s = (run_time-d*(24*3600)-h*3600-m*60)
-                running_time_str = "%02dd  %02d:%02d:%05.2fh"%(d,h,m,s)
-                printed_queue += "  %06d:%10s: %s : %s : %s\n"%(j.id, j.status, time.strftime("%Y-%m-%d %H:%M:%S",j.submit_time), running_time_str, j.cmd[:15])
-                tot_running_time +=run_time
-            
-            
-        d = int(tot_running_time/(24*3600))
-        h = int((tot_running_time-d*(24*3600))/3600)
-        m = int((tot_running_time-d*(24*3600)-h*3600)/60)
-        s = (tot_running_time-d*(24*3600)-h*3600-m*60)
-        running_time_str = "%02dd  %02d:%02d:%05.2fh"%(d,h,m,s)
-        printed_queue += "idle jobs: %d, running jobs: %d, total run time: %s\n"%(len(self.queue),len(self.jobs),running_time_str)
-        printed_queue += "Scheduler: %s,     Host: %s"%(self.scheduler_name,self.host)
+                
+            d = int(tot_running_time/(24*3600))
+            h = int((tot_running_time-d*(24*3600))/3600)
+            m = int((tot_running_time-d*(24*3600)-h*3600)/60)
+            s = (tot_running_time-d*(24*3600)-h*3600-m*60)
+            running_time_str = "%02dd  %02d:%02d:%05.2fh"%(d,h,m,s)
+            printed_queue += "idle jobs: %d, running jobs: %d, total run time: %s\n"%(len(self.queue),len(self.jobs),running_time_str)
+            printed_queue += "Scheduler: %s,     Host: %s"%(self.scheduler_name,self.host)
+        else:
+            printed_queue = ""
+            if(opt.find("R") >= 0):
+                for j in self.jobs:  
+                    j[1].update(now)
+                    printed_queue += j[1].formated_output(format_str)
+            if(opt.find("Q") >= 0):
+                for j in self.queue:
+                    j.update(now)
+                    printed_queue += j.formated_output(format_str)
+            if(opt.find("F") >= 0):
+                for j in self.finished_jobs:
+                    j.update(now)
+                    printed_queue += j.formated_output(format_str)
         return printed_queue
 
 #___________________________________________________________________________________________________    

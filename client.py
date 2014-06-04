@@ -82,7 +82,6 @@ class Client(object):
         pass
 #___________________________________________________________________________________________________
     def pre_cmd_get_available_sch(self,arg, opt):
-        print("here")
         for k in self.available_schedulers.keys():
             print("%30s | %s"%(k,self.available_schedulers[k]))
 #___________________________________________________________________________________________________
@@ -99,10 +98,10 @@ class Client(object):
         if(opt == None):
             queue = self.scheduler_client.request_job_queue("RQ")
         else:
-            queue = self.scheduler_client.request_job_queue(opt[0])
-            
-        for l in queue.splitlines()[2:]:
-            print(l)
+            queue = self.scheduler_client.request_job_queue(opt)
+        print(queue.decode('string_escape'))
+        #for l in queue.splitlines()[2:]:
+            #print(l)
 #___________________________________________________________________________________________________
     def cmd_stop(self,arg, opt):
         if(opt[0] == "now"):

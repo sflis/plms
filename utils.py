@@ -111,7 +111,31 @@ class Job(object):
         self.log_out=log_out
         self.log_err=log_err
         self.env = env
+        self.prop_dict = dict()
+    
+    def update(self,time):
+        def get_time_tuple(time):
+            d = int(time/(24*3600))
+            h = int((time-d*(24*3600))/3600)
+            m = int((time-d*(24*3600)-h*3600)/60)
+            s = (time-d*(24*3600)-h*3600-m*60)
+            return (d,h,m,s)    
+        self.prop_dict["cmd"] = self.cmd
+        self.prop_dict["status"] = self.status
+        self.prop_dict["user"] = self.user
+        self.prop_dict["id"] = self.id
         
+        (d,h,m,s) = get_time_tuple(time - self.start_time)
+        self.prop_dict["run_time"] = time - self.start_time
+        self.prop_dict["run_time_days"] = d
+        self.prop_dict["run_time_hours"] = h
+        self.prop_dict["run_time_minutes"] = m
+        self.prop_dict["run_time_seconds"] = s
+     
+    def formated_output(self, format_str):
+        return format_str%self.prop_dict
+    
+    
 #=====================================================================================================        
 class Message(object):
     def __init__(self, command = None, options = None,  user = None, host = None):
@@ -127,6 +151,7 @@ class Message(object):
         self.user = user
         self.host = host
         self.raw_msg = None
+    
     def compose(self):
         self.raw_msg = pickle.dumps(self.msg) 
         return self.raw_msg
