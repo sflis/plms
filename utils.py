@@ -123,10 +123,9 @@ class Job(object):
             return (d,h,m,s)    
         self.prop_dict["cmd"] = self.cmd
         self.prop_dict["status"] = self.status
-        self.prop_dict["status_id"]
+        self.prop_dict["status_id"] = statstr2id[status]
         self.prop_dict["user"] = self.user
         self.prop_dict["id"] = self.id
-        
         (d,h,m,s) = get_time_tuple(time - self.start_time)
         self.prop_dict["run_time"] = time - self.start_time
         self.prop_dict["run_time_days"] = d
