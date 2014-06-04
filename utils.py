@@ -112,7 +112,8 @@ class Job(object):
         self.log_err=log_err
         self.env = env
         self.prop_dict = dict()
-    
+        self.statstr2id = {"idle":0,"running":10,"held":20,"finished":30,"terminated":40}
+        self.statid2str = {0:"idle",10:"running",20:"held",30:"finished",40:"terminated"}
     def update(self,time):
         def get_time_tuple(time):
             d = int(time/(24*3600))
@@ -122,6 +123,7 @@ class Job(object):
             return (d,h,m,s)    
         self.prop_dict["cmd"] = self.cmd
         self.prop_dict["status"] = self.status
+        self.prop_dict["status_id"]
         self.prop_dict["user"] = self.user
         self.prop_dict["id"] = self.id
         
