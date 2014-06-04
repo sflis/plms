@@ -99,6 +99,10 @@ class Job(object):
     This class describes a job and contains information to execute the job 
     and to keep some statistics about it.
     '''
+    
+    statstr_2_id = {"idle":0,"running":10,"held":20,"finished":30,"Terminated":40}
+    statid_2_str = {0:"idle",10:"running",20:"held",30:"finished",40:"Terminated"}
+    
     def __init__(self, id, cmd, submit_time, user, log_out='/dev/null', log_err='/dev/null', env = None):
         self.id=id
         self.cmd = cmd
@@ -112,8 +116,8 @@ class Job(object):
         self.log_err=log_err
         self.env = env
         self.prop_dict = dict()
-        self.statstr2id = {"idle":0,"running":10,"held":20,"finished":30,"terminated":40}
-        self.statid2str = {0:"idle",10:"running",20:"held",30:"finished",40:"terminated"}
+        
+        
     def update(self,time):
         def get_time_tuple(time):
             d = int(time/(24*3600))
@@ -123,7 +127,7 @@ class Job(object):
             return (d,h,m,s)    
         self.prop_dict["cmd"] = self.cmd
         self.prop_dict["status"] = self.status
-        self.prop_dict["status_id"] = self.statstr2id[status]
+        self.prop_dict["status_id"] = Job.statstr_2_id[self.status]
         self.prop_dict["user"] = self.user
         self.prop_dict["id"] = self.id
         (d,h,m,s) = get_time_tuple(time - self.start_time)
@@ -134,7 +138,7 @@ class Job(object):
         self.prop_dict["run_time_seconds"] = s
      
     def formated_output(self, format_str):
-        return format_str%self.prop_dict
+        return  format_str%self.prop_dict
     
     
 #=====================================================================================================        

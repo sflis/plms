@@ -333,6 +333,13 @@ class PMLSServer(Daemon):
             printed_queue += "idle jobs: %d, running jobs: %d, total run time: %s\n"%(len(self.queue),len(self.jobs),running_time_str)
             printed_queue += "Scheduler: %s,     Host: %s"%(self.scheduler_name,self.host)
         else:
+            test = Job(-1,"",now,"")
+            test.update(now)
+            try:
+                s = test.formated_output(format_str)
+            except KeyError:
+                s = "Key error\n"
+                return s
             printed_queue = ""
             if(opt.find("R") >= 0):
                 for j in self.jobs:  
