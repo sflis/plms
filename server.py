@@ -46,7 +46,7 @@ class PMLSServer(Daemon):
         self.log_output = ""
         self.hold_output = True
         
-        if(os.path.isfile(self.configure_file) and conf != None):
+        if(os.path.isfile(self.configure_file) and conf == None):
             self.log("Found configure file, loading configuration")
             conf_file = open(self.configure_file,'r')
             conf = conf_file.readlines()
@@ -63,7 +63,7 @@ class PMLSServer(Daemon):
         else:
             if(conf == None):
                 print("No previous configuration found or given. Please provide PMLS configuration")
-                return
+                raise RuntimeError("No previous configuration found or given. Please provide PMLS configuration")
             self.log("No previous configuration. Generating default configuration...")
             self.n_proc_limit = conf.n_proc_limit
             self.proc_time_limit = conf.time_limit

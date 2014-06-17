@@ -21,6 +21,7 @@ def main(scheduler_name = None, daemonize = False, new = False, port='5555'):
 
     if(scheduler_name == None):
         scheduler_name = socket.gethostname()
+        
     if(new):
         configuration =  server.PMLSServer.PMLSconf(socket_path = socket_path,
                                 logs_path = logs_path,
