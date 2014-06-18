@@ -15,7 +15,7 @@ def ensure_dir(f):
     #print(d)
     if not os.path.exists(d):
         os.makedirs(d)
-#===================================================================================================	   
+#===================================================================================================
 #Simple stupid parser....
 def parse(string_list, parse_string, n = 0, separator=':',complete_line = False):
 
@@ -33,22 +33,22 @@ def parse(string_list, parse_string, n = 0, separator=':',complete_line = False)
 
 def job_process(socket_name, job_description):
     '''This function wraps the job. It executes the command
-    found in the job_description and redirects all output according 
+    found in the job_description and redirects all output according
     to the job_description to the appropriate log files.
     It is also responsible to monitor the execution (NOTE:not completely implemented yet)
-    and notify the scheduler once the job has finished execution. 
+    and notify the scheduler once the job has finished execution.
     '''
-    
+
     # redirect standard file descriptors to log files
     sys.stdout.flush()
     sys.stderr.flush()
-    
+
     so = file(job_description.log_out, 'w')
     se = file(job_description.log_err, 'w')
-    
+
     os.dup2(so.fileno(), sys.stdout.fileno())
     os.dup2(se.fileno(), sys.stderr.fileno())
-    
+
     #print(job_description.env)
     #setting the enviroment for the job
     if(job_description.env != None):
@@ -57,7 +57,7 @@ def job_process(socket_name, job_description):
 
     if(job_description.env == None):
         job_description.env = os.environ
-   
+
     # launch the job
     failed = False
     try:
@@ -72,7 +72,7 @@ def job_process(socket_name, job_description):
     finish_time = time.time()
     if(return_code !=0):
         failed = True
-        
+
     #communicate back the status
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
@@ -87,22 +87,22 @@ def job_process(socket_name, job_description):
     msg += "Start time: "+str(start_time)+"\n"
     msg += "End time: "+str(finish_time)+"\n"
     msg += "CPU time: "+str(cpu_time)+"\n"
-    
+
     socket.send(msg)
-    
+
     msg = socket.recv()
     #good bye
-    
-#=====================================================================================================    
+
+#=====================================================================================================
 class Job(object):
     '''
-    This class describes a job and contains information to execute the job 
+    This class describes a job and contains information to execute the job
     and to keep some statistics about it.
     '''
-    
+
     statstr_2_id = {"idle":0,"running":10,"held":20,"finished":30,"Terminated":40}
     statid_2_str = {0:"idle",10:"running",20:"held",30:"finished",40:"Terminated"}
-    
+
     def __init__(self, id, cmd, submit_time, user, log_out='/dev/null', log_err='/dev/null', env = None):
         self.id=id
         self.cmd = cmd
@@ -116,15 +116,15 @@ class Job(object):
         self.log_err=log_err
         self.env = env
         self.prop_dict = dict()
-        
-        
+
+
     def update(self,time):
         def get_time_tuple(time):
             d = int(time/(24*3600))
             h = int((time-d*(24*3600))/3600)
             m = int((time-d*(24*3600)-h*3600)/60)
             s = (time-d*(24*3600)-h*3600-m*60)
-            return (d,h,m,s)    
+            return (d,h,m,s)
         self.prop_dict["cmd"] = self.cmd
         self.prop_dict["status"] = self.status
         self.prop_dict["status_id"] = Job.statstr_2_id[self.status]
@@ -136,17 +136,17 @@ class Job(object):
         self.prop_dict["run_time_hours"] = h
         self.prop_dict["run_time_minutes"] = m
         self.prop_dict["run_time_seconds"] = s
-     
+
     def formated_output(self, format_str):
         return  format_str%self.prop_dict
-    
-    
-#=====================================================================================================        
+
+
+#=====================================================================================================
 class Message(object):
     def __init__(self, command = None, options = None,  user = None, host = None):
         self.msg = dict()
         self.msg['command'] = command
-        if(isinstance(options,list) or options == None): 
+        if(isinstance(options,list) or options == None):
             self.msg['options'] = options
         else:
             self.msg['options'] = [options]
@@ -156,11 +156,11 @@ class Message(object):
         self.user = user
         self.host = host
         self.raw_msg = None
-    
+
     def compose(self):
-        self.raw_msg = pickle.dumps(self.msg) 
+        self.raw_msg = pickle.dumps(self.msg)
         return self.raw_msg
-    
+
     def check_sanity(self, add_keys = None):
         std_keys = ['command','options','user']
         if(add_keys != None):
@@ -168,7 +168,7 @@ class Message(object):
         for k in std_keys:
             if(k not in self.msg.keys()):
                 raise ValueError("Key '%s' not present in message."%k)
-            
+
     def decompose(self, msg):
         self.raw_msg = msg
         self.msg = pickle.loads(msg)
@@ -177,7 +177,7 @@ class Message(object):
         self.opt = self.msg['options']
         self.user = self.msg['user']
         return self.msg
-    
+
 #=====================================================================================================
 class RetMessage(object):
     def __init__(self, name = None, host = None , status = None):
