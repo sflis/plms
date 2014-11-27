@@ -105,11 +105,10 @@ class SchedulerClient(object):
 #___________________________________________________________________________________________________    
     def remove_jobs(self, ids = None, user = "Unknown"):    
         
-        msg = 'REMOVE_JOBS\n'
         if(ids == None):
             opt = 'ALL'
         else:
             opt = 'LIST'
         msg = Message('REMOVE_JOBS', opt, user)
-        msg["job_ids"] = ids
+        msg.msg["job_ids"] = ids
         return self.send_msg(msg.compose())

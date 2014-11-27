@@ -177,7 +177,7 @@ class PMLSServer(Daemon):
             n = self.remove_jobs(None, msg.msg["job_ids"])
             return_msg = "SUCCESS\n"
             return_msg = str(n)
-        elif(msg.options[0] == "LIST"):
+        elif(msg.opt[0] == "LIST"):
             n = self.remove_jobs(msg.msg["job_ids"], msg.user)
             return_msg = "SUCCESS\n"
             return_msg = str(n)
