@@ -32,23 +32,26 @@ class Client(object):
         self.load_state()
  
         self.load_state()
-        self.pre_cmd =  {'cs'          :self.pre_cmd_change_sch,
-                         'as'          :self.pre_cmd_get_available_sch,
-                         'add-remote'  :self.cmd_add_remote,
-                         'which'       :self.cmd_which,
+        self.pre_cmd =  {'cs'          :(self.pre_cmd_change_sch,'change scheduler'),
+                         'as'          :(self.pre_cmd_get_available_sch,'list available scheduers'),
+                         'add-remote'  :(self.cmd_add_remote,'add remote scheduler'),
+                         'which'       :(self.cmd_which,'which scheduler is used'),
+                         'avgloadl'    :(self.cmd_avgloadl,''),
                          }
         
-        self.commands = {'q'           :self.cmd_print_queue,
-                        'stop'        :self.cmd_stop,
-                        'rm'          :self.cmd_rm,
-                        'submit'      :self.cmd_submit,
-                        'submit-list' :self.cmd_submit_list,
-                        'avgload'     :self.cmd_avg_load,
-                        'submit-jdf'  :self.cmd_submit_jdf,
+        
+        self.commands = {'q'          :(self.cmd_print_queue,'queue'),
+                        'stop'        :(self.cmd_stop,'stop scheduler'),
+                        'rm'          :(self.cmd_rm,'remove jobs'),
+                        'submit'      :(self.cmd_submit,''),
+                        'submit-list' :(self.cmd_submit_list,''),
+                        'avgload'     :(self.cmd_avg_load,''),
+                        'submit-jdf'  :(self.cmd_submit_jdf,''),
                         
-                        'n-proc'      :self.cmd_cn_proc,
-                        'ping'        :self.cmd_ping
+                        'n-proc'      :(self.cmd_cn_proc,''),
+                        'ping'        :(self.cmd_ping,'')
                         }
+      
 #___________________________________________________________________________________________________
     def load_state(self):
         '''Loads the previus state of the client
@@ -174,18 +177,48 @@ class Client(object):
         sinfo = SchedulerInfo(opt[0],addr[0],addr[1],"")
         self.available_schedulers[addr[0]+":"+opt[0]] = sinfo
         
-        
-def main(command, options):
-    client = Client()
+#___________________________________________________________________________________________________        
+    def cmd_avgloadl(self,arg, opt):
+        print("Not implemented yet")
+        return
+        import copy
+        for k in self.available_schedulers.keys():
+            print("%30s | %s"%(k,self.available_schedulers[k]))
+            temp_client = copy.copy(self)
+            temp_client.pre_cmd_change_sch([],[k])
+            try:
+                temp_client.initialize_socket()
+            except:
+                
+                print("timed out")
+                import sys
+                sys.stdout.flush()
+                del temp_client
+                continue
+            (name, host, dt) = temp_client.scheduler_client.ping()
+            print("Ping: %s,  %fms"%(self.current_scheduler.tcp_addr,dt*1e3))
+            print("Host: %s, Name: %s"%(host,name))
+            temp_client.cmd_avg_load([],[])
+#___________________________________________________________________________________________________        
+    def print_help(self):
+        usage = '%prog [command] [options]\n'
+        usage +='      valid commands are:\n'
+        for cmd_key in self.pre_cmd.keys():
+                usage +="     %+15s       %-15s\n"%(cmd_key,self.pre_cmd[cmd_key][1])
+        for cmd_key in self.commands.keys():
+                usage +="     %+15s       %-15s\n"%(cmd_key,self.commands[cmd_key][1])
+        return usage              
+def main(command, options, client):
+    
     inpre = False
     if(command in client.pre_cmd.keys()):
-        client.pre_cmd[command](None, options)
+        client.pre_cmd[command][0](None, options)
         inpre = True
     
     
     if(command in client.commands.keys()):
         client.initialize_socket()
-        client.commands[command](None, options)
+        client.commands[command][0](None, options)
     else:
         if(not inpre):
             print("Command '%s' not recognized"%command)
@@ -197,14 +230,8 @@ if(__name__ == '__main__'):
        
     #-----------------------------------------------------------------------
     # Get the script's input parameters from the the command line.
-    usage = '%prog [command] [options]\n'
-    usage +='      valid commands are:\n'
-    usage +='      q                  \n'
-    usage +='      stop               \n'
-    usage +='      n-proc             \n'
-    usage +='      rm                 \n'
-    usage +='      submit             \n'
-    
+    client = Client()
+    usage =  client.print_help()
     parser = OptionParser()
     parser.set_usage(usage)
     
@@ -216,7 +243,7 @@ if(__name__ == '__main__'):
         
     (optionss, args) = parser.parse_args() 
     path_here = os.path.dirname(os.path.realpath(__file__))
-    main(command, options) 
+    main(command, options,client) 
     
     
     

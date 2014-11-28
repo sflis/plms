@@ -20,15 +20,23 @@ class SchedulerClient(object):
         if(local):
             self.socket.connect("tcp://127.0.0.1:%s"%tcp_port)
         else:
-            server_name = url.split("@")[0]+"@"+socket.gethostbyname(url.split("@")[1])
-            self.tunnel = ssh.tunnel_connection(self.socket,"tcp://127.0.0.1:%s"%tcp_port, server_name)
+            try:
+                server_name = url.split("@")[0]+"@"+canIHasIP(url.split("@")[1],3)
+            except e:
+                raise(e)
+                return
+            #server_name = url.split("@")[0]+"@"+socket.gethostbyname(url.split("@")[1])
+            try:
+                self.tunnel = ssh.tunnel_connection(self.socket,"tcp://127.0.0.1:%s"%tcp_port, server_name, timeout=3)
+            except e:
+                raise(e)
+                return
         self.socket.setsockopt(zmq.LINGER, 0)
         
         self.poller = zmq.Poller()      
         self.poller.register(self.socket, zmq.POLLIN)
 #___________________________________________________________________________________________________    
     def send_msg(self, msg):
-
         try:
             self.socket.send(msg, zmq.NOBLOCK)
         except:
@@ -39,6 +47,7 @@ class SchedulerClient(object):
             while(True):
                 socks = dict(self.poller.poll(1000))
                 if socks:
+                    
                     if socks.get(self.socket) == zmq.POLLIN:
                         return_msg = self.socket.recv(zmq.NOBLOCK)
                         break
@@ -112,3 +121,36 @@ class SchedulerClient(object):
         msg = Message('REMOVE_JOBS', opt, user)
         msg.msg["job_ids"] = ids
         return self.send_msg(msg.compose())
+
+#___________________________________________________________________________________________________        
+import signal, socket
+try:
+    import DNS
+except:
+    DNS = False
+
+#___________________________________________________________________________________________________
+def DNSResolve( s ):
+    if DNS:
+        DNS.ParseResolvConf() # Windows?
+        r = DNS.DnsRequest(name=s,qtype='A')
+        a = r.req()
+        return a.answers[0]['data']
+    else:
+        return socket.gethostbyname( s )
+
+#___________________________________________________________________________________________________
+def dns_timeout(a,b):
+    raise Exception("Oh Noes! a DNS lookup timeout!")
+
+#___________________________________________________________________________________________________
+def canIHasIP( domain_name, timeout=3 ):
+    signal.signal(signal.SIGALRM, dns_timeout)
+    signal.alarm( timeout )
+    try:
+        ip = DNSResolve( domain_name )
+    except Exception, exc:
+        print exc
+        return False
+    signal.alarm(0)
+    return ip
