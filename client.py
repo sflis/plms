@@ -89,6 +89,9 @@ class Client(object):
             print("%30s | %s"%(k,self.available_schedulers[k]))
 #___________________________________________________________________________________________________
     def cmd_cn_proc(self, arg,opt):
+        if(opt == None ):
+            print("Error: no nproc_limit given")
+            return
         self.scheduler_client.change_nproc_limit(int(opt[0]))
 #___________________________________________________________________________________________________
     def cmd_avg_load(self,arg,opt):
@@ -128,7 +131,7 @@ class Client(object):
 #___________________________________________________________________________________________________
     def cmd_submit(self,arg, opt):
         if(options == None):
-            print("Must pass a command to submit")
+            print("Error: Must pass a command to submit")
         else:
             return_msg = self.scheduler_client.submit_simple_jobs([" ".join(options)], env = os.environ)
             print(return_msg)
@@ -139,7 +142,7 @@ class Client(object):
 #___________________________________________________________________________________________________
     def cmd_submit_list(self,arg, opt):
         if(opt == None):
-            print("Error")
+            print("Error: no file provided")
         else:
             joblist = open(opt[0],'r').readlines()
             self.scheduler_client.submit_simple_jobs(joblist, env = os.environ)	
