@@ -25,9 +25,10 @@ from utils import parse
 #===================================================================================================
 #++++++Class: Server++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
-class PMLSServer(Daemon):
-    '''ProtoScheduler a simple scheduler class which handles job scheduling on local machines through communications
-    whith the ProtoSchedulerClient class.
+class PLMSServer(Daemon):
+    ''' The PLMSServer (python local micro scheduler server) is  a simple scheduler class which handles 
+        job scheduling on local machines through communications
+        whith the a client.
     '''
     
     
@@ -111,7 +112,8 @@ class PMLSServer(Daemon):
                          'REMOVE_JOBS'  :self.command_REMOVE_JOBS,
                          'STOP'         :self.command_STOP,
                          'AVG_LOAD'     :self.command_AVG_LOAD,
-                         'PING'         :self.command_PING
+                         'PING'         :self.command_PING,
+                         'REQUEST_JOB'  :self.command_REQUEST_JOB,
                          }
         
         if(init):
@@ -213,6 +215,10 @@ class PMLSServer(Daemon):
         return_msg +=self.scheduler_name+"\n"
         return_msg +=self.host+"\n"
         return return_msg
+    
+#___________________________________________________________________________________________________
+    def command_REQUEST_JOB(self, msg):
+        pass
 #___________________________________________________________________________________________________
     def recv_commands(self):
         '''
@@ -263,7 +269,7 @@ class PMLSServer(Daemon):
 
 #___________________________________________________________________________________________________
     def log(self, msg):
-        
+        '''This function provides basic log functionallity for the server'''
         frame,filename,line_number,function_name,lines,index=\
         inspect.getouterframes(inspect.currentframe())[1]
         s = datetime.now().strftime('%Y-%m-%d %H:%M:%S')+" %s:%d in %s :  %s"%(filename,line_number,function_name,msg)

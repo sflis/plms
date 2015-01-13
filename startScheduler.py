@@ -23,7 +23,7 @@ def main(scheduler_name = None, daemonize = False, new = False, port='5555'):
         scheduler_name = socket.gethostname()
         
     if(new):
-        configuration =  server.PMLSServer.PMLSconf(socket_path = socket_path,
+        configuration =  server.PLMSServer.PMLSconf(socket_path = socket_path,
                                 logs_path = logs_path,
                                 n_proc_limit = 2,
                                 time_limit = -1,
@@ -33,7 +33,7 @@ def main(scheduler_name = None, daemonize = False, new = False, port='5555'):
     else:
         configuration = None
         
-    pscheduler = server.PMLSServer(scheduler_name, conf_path, configuration)
+    pscheduler = server.PLMSServer(scheduler_name, conf_path, configuration)
     
     pscheduler.start(daemonize)  
 
