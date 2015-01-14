@@ -36,7 +36,7 @@ class Client(object):
                          'as'          :(self.pre_cmd_get_available_sch,'list available scheduers'),
                          'add-remote'  :(self.cmd_add_remote,'add remote scheduler'),
                          'which'       :(self.cmd_which,'which scheduler is used'),
-                         'avgloadl'    :(self.cmd_avgloadl,''),
+                         'avgloadl'    :(self.cmd_avgloadl,'list the average load on the hosts of the available schedulers'),
                          }
         
         
@@ -45,7 +45,7 @@ class Client(object):
                         'rm'          :(self.cmd_rm,'remove jobs'),
                         'submit'      :(self.cmd_submit,''),
                         'submit-list' :(self.cmd_submit_list,''),
-                        'avgload'     :(self.cmd_avg_load,''),
+                        'avgload'     :(self.cmd_avg_load,'returns the average load on the host from the current scheduler'),
                         'submit-jdf'  :(self.cmd_submit_jdf,''),
                         
                         'n-proc'      :(self.cmd_cn_proc,''),
@@ -90,9 +90,10 @@ class Client(object):
 #___________________________________________________________________________________________________
     def cmd_cn_proc(self, arg,opt):
         if(opt == None ):
-            print("Error: no nproc_limit given")
-            return
-        self.scheduler_client.change_nproc_limit(int(opt[0]))
+            limit = None
+        else:
+            limit = int(opt[0])
+        print(self.scheduler_client.change_nproc_limit(limit))
 #___________________________________________________________________________________________________
     def cmd_avg_load(self,arg,opt):
         print(self.scheduler_client.get_avg_load())
@@ -225,7 +226,7 @@ def main(command, options, client):
     else:
         if(not inpre):
             print("Command '%s' not recognized"%command)
-        
+            print(client.print_help())
     client.save_state()
 
 	    
