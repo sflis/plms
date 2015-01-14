@@ -29,6 +29,14 @@ def parse(string_list, parse_string, n = 0, separator=':',complete_line = False)
                 el = line[1].split()
                 return el[n]
 
+#===================================================================================================       
+def parse_opt(opt_list,opt):
+    ret = False
+    for o in opt_list:
+        if('-' in o):
+            if(opt in o):
+                return True
+    return False
 #=====================================================================================================
 
 def job_process(socket_name, job_description):
@@ -103,8 +111,8 @@ class Job(object):
     statstr_2_id = {"idle":0,"running":10,"held":20,"finished":30,"Terminated":40}
     statid_2_str = {0:"idle",10:"running",20:"held",30:"finished",40:"Terminated"}
     
-    def __init__(self, id, cmd, submit_time, user, log_out='/dev/null', log_err='/dev/null', env = None):
-        self.id=id
+    def __init__(self, id, cmd, submit_time, user, log_out='/dev/null', log_err='/dev/null', env = None, name = ''):
+        self.id = id
         self.cmd = cmd
         self.status = "idle"
         self.submit_time = submit_time
@@ -116,7 +124,7 @@ class Job(object):
         self.log_err=log_err
         self.env = env
         self.prop_dict = dict()
-        
+        self.name = name
         
     def update(self,time):
         def get_time_tuple(time):
@@ -180,13 +188,17 @@ class Message(object):
     
 #=====================================================================================================
 class RetMessage(object):
-    def __init__(self, name = None, host = None , status = None):
+    def __init__(self, server = None, status = None):
         self.msg = dict()
-        self.name = name
-        self.host = host
+        if(server != None):
+            self.scheduler_name = server.scheduler_name
+            self.host = server.host
         self.status = status
         self.composed = None
-    def composte(self):
+    def compose(self):
         self.composed  = pickle.dumps(self)
+        return self.composed
     def decompose(self, msg):
         self = pickle.loads(msg)
+        
+        

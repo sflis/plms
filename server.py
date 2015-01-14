@@ -102,6 +102,7 @@ class PLMSServer(Daemon):
         self.jobs = list()
         self.finished_jobs = list()
         self.job_finish_status = list()
+        self.all_jobs = dict()
         self.id_count = 0
 
         self.quit = False
@@ -113,7 +114,7 @@ class PLMSServer(Daemon):
                          'STOP'         :self.command_STOP,
                          'AVG_LOAD'     :self.command_AVG_LOAD,
                          'PING'         :self.command_PING,
-                         'REQUEST_JOB'  :self.command_REQUEST_JOB,
+                         'REQUEST_JOBS' :self.command_REQUEST_JOBS,
                          }
         
         if(init):
@@ -219,8 +220,15 @@ class PLMSServer(Daemon):
         return return_msg
     
 #___________________________________________________________________________________________________
-    def command_REQUEST_JOB(self, msg):
-        pass
+    def command_REQUEST_JOBS(self, msg):        
+        
+        return_msg = RetMessage(server = self,status = "SUCCES")
+        if(msg.opt[0] in self.all_jobs.keys()):
+            return_msg.msg['job'] = self.all_jobs[msg.opt[0]]
+        else:
+            return_msg.status = "FAIL"
+            return_msg.msg["error"] = "Job id %d not found"%msg.opt[0]
+        return return_msg.compose()
 #___________________________________________________________________________________________________
     def recv_commands(self):
         '''
@@ -282,15 +290,15 @@ class PLMSServer(Daemon):
 
 #___________________________________________________________________________________________________
     def add_job(self, cmd, user, log_out , log_err, env ):
-
-        self.queue.append(Job(self.id_count,
+        job = Job(self.id_count,
                 cmd,
                 time.localtime(),
                 user,
                 log_out,
                 log_err,
-                env))
-                
+                env)
+        self.queue.append(job)
+        self.all_jobs[self.id_count] = job        
         self.id_count +=1
         
 #___________________________________________________________________________________________________

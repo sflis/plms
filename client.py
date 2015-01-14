@@ -12,7 +12,7 @@ import utils
 import pickle
 import re
 import collections
-
+from utils import parse_opt
 SchedulerInfo = collections.namedtuple("SchedulerInfo","name, tcp_addr, tcp_port, host")
 class Client(object):
     
@@ -49,7 +49,8 @@ class Client(object):
                         'submit-jdf'  :(self.cmd_submit_jdf,''),
                         
                         'n-proc'      :(self.cmd_cn_proc,''),
-                        'ping'        :(self.cmd_ping,'')
+                        'ping'        :(self.cmd_ping,''),
+                        'log'         :(self.cmd_log,''),
                         }
       
 #___________________________________________________________________________________________________
@@ -204,6 +205,22 @@ class Client(object):
             print("Host: %s, Name: %s"%(host,name))
             temp_client.cmd_avg_load([],[])
 #___________________________________________________________________________________________________        
+    def cmd_log(self, arg, opt):
+        job = self.scheduler_client.request_job(int(opt[0]))
+        file_path = dict()
+        
+        if(parse_opt(opt,'o')):
+            file_path['log out'] = (job.log_out)
+        
+        if(parse_opt(opt,'e')):
+            file_path['log err'] = (job.log_err)
+
+        for k,v in file_path.items():
+            print(k+": "+v)
+            if(not parse_opt(opt,'f')):
+                with open(v, 'r') as fin:
+                    print fin.read()
+#___________________________________________________________________________________________________        
     def print_help(self):
         usage = '%prog [command] [options]\n'
         usage +='      valid commands are:\n'
@@ -212,6 +229,9 @@ class Client(object):
         for cmd_key in self.commands.keys():
                 usage +="     %+15s       %-15s\n"%(cmd_key,self.commands[cmd_key][1])
         return usage              
+
+
+#___________________________________________________________________________________________________        
 def main(command, options, client):
     
     inpre = False
@@ -236,16 +256,18 @@ if(__name__ == '__main__'):
     # Get the script's input parameters from the the command line.
     client = Client()
     usage =  client.print_help()
-    parser = OptionParser()
-    parser.set_usage(usage)
-    
+    #parser = OptionParser()
+    #parser.set_usage(usage)
+    if(parse_opt(sys.argv[1:],'h')):
+        print(usage)
+        sys.exit(0)
     command = sys.argv[1]
     if(len(sys.argv) >= 3):
         options = list(sys.argv[2:])
     else:
         options = None
         
-    (optionss, args) = parser.parse_args() 
+    #(optionss, args) = parser.parse_args() 
     path_here = os.path.dirname(os.path.realpath(__file__))
     main(command, options,client) 
     

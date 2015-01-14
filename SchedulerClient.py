@@ -121,7 +121,17 @@ class SchedulerClient(object):
         msg = Message('REMOVE_JOBS', opt, user)
         msg.msg["job_ids"] = ids
         return self.send_msg(msg.compose())
-
+#___________________________________________________________________________________________________    
+    def request_job(self, id, user = "Unknown"):
+        msg = Message('REQUEST_JOBS', [id], user)
+        
+        retmsg = self.send_msg(msg.compose())
+        #print(retmsg)
+        retmsg = pickle.loads(retmsg)#RetMessage()
+        #retmsg.decompose(self.send_msg(msg.compose()))
+        
+        #print(retmsg.status)
+        return retmsg.msg['job']
 #___________________________________________________________________________________________________        
 import signal, socket
 try:
