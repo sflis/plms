@@ -20,11 +20,11 @@ def ensure_dir(f):
 def parse(string_list, parse_string, n = 0, separator=':',complete_line = False):
 
     for line in string_list:
-        line = line.split(separator)
+        line = line.split(separator, 1)
 
         if(line[0] == parse_string):
             if(complete_line):
-                return line[1].split()
+                return line[1]
             else:
                 el = line[1].split()
                 return el[n]
@@ -65,12 +65,16 @@ def job_process(socket_name, job_description):
 
     if(job_description.env == None):
         job_description.env = os.environ
-   
+        
+    #if(job_description.current_dir != None):
+        #print(job_description.current_dir)
+    os.chdir(job_description.current_dir) 
+    
     # launch the job
     failed = False
     try:
         start_time = time.time()
-        return_code = subprocess.call(job_description.cmd, shell=True)
+        return_code = subprocess.call(job_description.cmd, cwd=job_description.wdir, shell=True) #,cwd=job_description.current_dir
     except:
         failed = True
         return_code = -1
@@ -111,7 +115,7 @@ class Job(object):
     statstr_2_id = {"idle":0,"running":10,"held":20,"finished":30,"Terminated":40}
     statid_2_str = {0:"idle",10:"running",20:"held",30:"finished",40:"Terminated"}
     
-    def __init__(self, id, cmd, submit_time, user, log_out='/dev/null', log_err='/dev/null', env = None, name = ''):
+    def __init__(self, id, cmd, submit_time, user, log_out='/dev/null', log_err='/dev/null', env = None, name = '', wdir = None):
         self.id = id
         self.cmd = cmd
         self.status = "idle"
@@ -125,7 +129,7 @@ class Job(object):
         self.env = env
         self.prop_dict = dict()
         self.name = name
-        
+        self.wdir = wdir
     def update(self,time):
         def get_time_tuple(time):
             d = int(time/(24*3600))

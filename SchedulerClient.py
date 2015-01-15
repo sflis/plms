@@ -9,7 +9,7 @@ import time
 from utils import Message
 from utils import RetMessage
 #===================================================================================================
-#++++++Class: SchedulerClient++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#++++++Class: SchedulerClient+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 
 class SchedulerClient(object):
@@ -59,18 +59,21 @@ class SchedulerClient(object):
             
         return return_msg
 #___________________________________________________________________________________________________    
-    def submit_simple_jobs(self, cmd_list, outlog_path  = None, errlog_path = None, user = "Unknown", env = None):
+    def submit_simple_jobs(self, cmd_list, outlog_path  = None, errlog_path = None, user = "Unknown", env = None, current_dir = None):
         if(outlog_path == None or errlog_path == None):
             msg = Message('SUBMIT_JOBS', 'SIMPLE', user)
             msg.msg["cmd_list"] = cmd_list
             msg.msg["env"] = env
+            msg.msg["current_dir"] = current_dir  
         else:
             msg = Message( 'SUBMIT_JOBS', 'SIMPLE_LOG', user)
             msg.msg["cmd_list"] = cmd_list
             msg.msg["env"] = env
             msg.msg["outlog_path"] = outlog_path 
             msg.msg["errlog_path"] = errlog_path
-                
+            msg.msg["current_dir"] = current_dir   
+            
+        #print(msg.msg["current_dir"])
         return self.send_msg(msg.compose())
         
 #___________________________________________________________________________________________________    
@@ -131,6 +134,9 @@ class SchedulerClient(object):
         #retmsg.decompose(self.send_msg(msg.compose()))
         
         #print(retmsg.status)
+        if('error' in retmsg.msg.keys()):
+            print(retmsg.msg['error'])
+            sys.exit(0)
         return retmsg.msg['job']
 #___________________________________________________________________________________________________        
 import signal, socket

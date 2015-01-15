@@ -136,6 +136,8 @@ class PLMSServer(Daemon):
         self.queue = state["queue"]
         self.finished_jobs = state["finished"]
         self.id_count = state["id_count"]
+        if("all_jobs" in state.keys()):
+            self.all_jobs = state["all_jobs"]
 #___________________________________________________________________________________________________
     def init_sockets(self):
         self.log("Initilizing sockets")
@@ -241,10 +243,10 @@ class PLMSServer(Daemon):
         except:
             return
         
-        self.log("Recieved command from client")
+        
         msg = Message()
         msg.decompose(message)
-
+        self.log("Recieved command from client: %s"%msg.cmd)
         if(msg.cmd in self.commands.keys()):
             return_msg = self.commands[msg.cmd](msg)
         else:
@@ -258,20 +260,29 @@ class PLMSServer(Daemon):
         self.log("Parsing job submit list")
         if(msg.opt[0] == 'SIMPLE'):
             for j in msg.msg["cmd_list"]:
-                self.add_job(j, msg.user, self.default_log_path + str(self.id_count)+".out", self.default_log_path+str(self.id_count)+".err", env = msg.msg["env"])
+                self.add_job(j, msg.user, 
+                             self.default_log_path + str(self.id_count)+".out", 
+                             self.default_log_path + str(self.id_count)+".err", 
+                             env = msg.msg["env"], 
+                             current_dir = msg.msg["current_dir"])
             return len(msg.msg["cmd_list"])
         elif(msg.opt[0] == 'SIMPLE_LOG'):
             log_out_path = msg.msg["log_out_path"] 
             log_err_path = msg.msg["log_err_path"]      
             for j in msg_dict["cmd_list"]:
-                self.add_job(j, msg.user, log_out_path + str(self.id_count)+".out", log_err_path + str(self.id_count)+".err",env = msg.msg["env"])
+                self.add_job(j, msg.user, 
+                             log_out_path + str(self.id_count)+".out", 
+                             log_err_path + str(self.id_count)+".err",
+                             env = msg.msg["env"], 
+                             current_dir = msg.msg["current_dir"])
             return len(msg.msg["cmd_list"])
         elif(msg.opt[0] == 'JOB_DESCRIPTION'):
             log_out = msg.msg["outlog"] 
             log_err = msg.msg["errlog"]
             cmd = msg.msg["executable"]
-            for arg in msg.msg["args"]:
-                cmd +=" "+arg
+            cmd += msg.msg["args"]:
+            #for arg in msg.msg["args"]:
+                #cmd +=" "+arg
             self.add_job(cmd, msg.user, log_out, log_err, env = msg.msg["env"])
             return 1
         else:
@@ -289,21 +300,22 @@ class PLMSServer(Daemon):
             print(s)
 
 #___________________________________________________________________________________________________
-    def add_job(self, cmd, user, log_out , log_err, env ):
+    def add_job(self, cmd, user, log_out , log_err, env, current_dir = None ):
         job = Job(self.id_count,
                 cmd,
                 time.localtime(),
                 user,
                 log_out,
                 log_err,
-                env)
+                env,
+                '',
+                current_dir)
         self.queue.append(job)
         self.all_jobs[self.id_count] = job        
         self.id_count +=1
         
 #___________________________________________________________________________________________________
     def print_queue(self, opt, format_str = None):
-        self.log("Printing queue with opt %s"%opt)
         now = time.time()
         tot_running_time = 0
         if(format_str == None):
@@ -490,9 +502,10 @@ class PLMSServer(Daemon):
         
         '''
         self.log("Saving state")
-        stat = dict()
-        stat["queue"] = self.queue
-        stat["finished"] = self.finished_jobs
-        stat["id_count"] = self.id_count
-        pickle.dump(stat, open(self.statistics_file, 'wb'))
+        state = dict()
+        state["queue"] = self.queue
+        state["finished"] = self.finished_jobs
+        state["id_count"] = self.id_count
+        state["all_jobs"] = self.all_jobs  
+        pickle.dump(state, open(self.statistics_file, 'wb'))
         

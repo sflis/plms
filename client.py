@@ -135,7 +135,7 @@ class Client(object):
         if(options == None):
             print("Error: Must pass a command to submit")
         else:
-            return_msg = self.scheduler_client.submit_simple_jobs([" ".join(options)], env = os.environ)
+            return_msg = self.scheduler_client.submit_simple_jobs([" ".join(options)], env = os.environ, current_dir = os.getcwd())
             print(return_msg)
         if(return_msg.find("FAIL")>=0):
             print("Submition failed")
@@ -249,7 +249,7 @@ def main(command, options, client):
             print(client.print_help())
     client.save_state()
 
-	    
+    
 if(__name__ == '__main__'):
        
     #-----------------------------------------------------------------------
