@@ -66,10 +66,10 @@ def job_process(socket_name, job_description):
     if(job_description.env == None):
         job_description.env = os.environ
         
-    #if(job_description.current_dir != None):
-        #print(job_description.current_dir)
-    os.chdir(job_description.current_dir) 
-    
+    if(job_description.wdir != None):
+        os.chdir(job_description.wdir) 
+    else:
+        job_description.wdir='/'
     # launch the job
     failed = False
     try:

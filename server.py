@@ -280,7 +280,7 @@ class PLMSServer(Daemon):
             log_out = msg.msg["outlog"] 
             log_err = msg.msg["errlog"]
             cmd = msg.msg["executable"]
-            cmd += msg.msg["args"]:
+            cmd += msg.msg["args"]
             #for arg in msg.msg["args"]:
                 #cmd +=" "+arg
             self.add_job(cmd, msg.user, log_out, log_err, env = msg.msg["env"])
