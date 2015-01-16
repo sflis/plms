@@ -136,7 +136,7 @@ class Client(object):
                 if(cmd[0] == ''):
                     cmd[0] = opt[0]
         queue = self.scheduler_client.request_job_queue(cmd)
-        print(queue.decode('string_escape'))
+        print(queue[21:].decode('string_escape'))
         #for l in queue.splitlines()[2:]:
             #print(l)
 #___________________________________________________________________________________________________
@@ -168,12 +168,12 @@ class Client(object):
             return
         else:
             return_msg = self.scheduler_client.submit_simple_jobs([" ".join(options)], env = os.environ, current_dir = os.getcwd())
-            print(return_msg)
+            #print(return_msg)
         
         if(return_msg.find("FAIL")>=0):
             print(bcolors.BOLD+bcolors.FAIL+"Submition failed"+bcolors.ENDC)
         else:
-            print(bcolors.OKBLUE+"Submited job"+bcolors.ENDC) 
+            print(bcolors.OKBLUE+"Succesfully submited job"+bcolors.ENDC) 
 #___________________________________________________________________________________________________
     def cmd_submit_list(self,arg, opt):
         if(opt == None):
