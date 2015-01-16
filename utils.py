@@ -32,11 +32,23 @@ def parse(string_list, parse_string, n = 0, separator=':',complete_line = False)
 #===================================================================================================       
 def parse_opt(opt_list,opt):
     ret = False
+    index = 0
     for o in opt_list:
         if('-' in o):
             if(opt in o):
                 return True
-    return False
+        index +=1
+    return False 
+#===================================================================================================       
+def parse_arg(opt_list,opt):
+    ret = False
+    index = 0
+    for o in opt_list:
+        if('-' in o):
+            if(opt in o):
+                return True,index
+        index +=1
+    return False, 0
 #=====================================================================================================
 
 def job_process(socket_name, job_description):

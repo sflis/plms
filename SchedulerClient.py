@@ -7,7 +7,7 @@ import socket
 import time
 
 from utils import Message
-from utils import RetMessage
+from utils import RetMessage, bcolors
 #===================================================================================================
 #++++++Class: SchedulerClient+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
@@ -135,7 +135,7 @@ class SchedulerClient(object):
         
         #print(retmsg.status)
         if('error' in retmsg.msg.keys()):
-            print(retmsg.msg['error'])
+            print(bcolors.BOLD+bcolors.FAIL+retmsg.msg['error']+bcolors.ENDC)
             sys.exit(0)
         return retmsg.msg['job']
 #___________________________________________________________________________________________________        

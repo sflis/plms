@@ -12,7 +12,7 @@ import utils
 import pickle
 import re
 import collections
-from utils import parse_opt,bcolors
+from utils import parse_opt,parse_arg,bcolors
 SchedulerInfo = collections.namedtuple("SchedulerInfo","name, tcp_addr, tcp_port, host")
 class Client(object):
     
@@ -40,17 +40,17 @@ class Client(object):
                          }
         
         
-        self.commands = {'q'          :(self.cmd_print_queue,'queue'),
+        self.commands = {'q'          :(self.cmd_print_queue,'returns queue'),
                         'stop'        :(self.cmd_stop,'stop scheduler'),
-                        'rm'          :(self.cmd_rm,'remove jobs'),
-                        'submit'      :(self.cmd_submit,''),
+                        'rm'          :(self.cmd_rm,'remove jobs by job id'),
+                        'submit'      :(self.cmd_submit,'Simple job submit by passing a command line string'),
                         'submit-list' :(self.cmd_submit_list,''),
                         'avgload'     :(self.cmd_avg_load,'returns the average load on the host from the current scheduler'),
                         'submit-jdf'  :(self.cmd_submit_jdf,''),
                         
-                        'n-proc'      :(self.cmd_cn_proc,''),
+                        'n-proc'      :(self.cmd_cn_proc,'configures the maximum number of simultaneous jobs'),
                         'ping'        :(self.cmd_ping,''),
-                        'log'         :(self.cmd_log,''),
+                        'log'         :(self.cmd_log,'fast access to log files via job id number'),
                         }
       
 #___________________________________________________________________________________________________
@@ -103,10 +103,39 @@ class Client(object):
         self.current_scheduler = self.available_schedulers[opt[0]]
 #___________________________________________________________________________________________________
     def cmd_print_queue(self,arg, opt):
+        cmd = ''
+        
         if(opt == None):
-            queue = self.scheduler_client.request_job_queue("RQ")
+            cmd = 'RQ'
         else:
-            queue = self.scheduler_client.request_job_queue(opt)
+            if(parse_opt(opt,'h')):
+                print(bcolors.BOLD+"usage: q [options]"+bcolors.ENDC)
+                print(bcolors.BOLD+"    -f  "+bcolors.ENDC+"    finished jobs")
+                print(bcolors.BOLD+"    -r   "+bcolors.ENDC+"   running jobs")
+                print(bcolors.BOLD+"    -q    "+bcolors.ENDC+"  queued jobs")
+                print(bcolors.BOLD+"    -s    "+bcolors.ENDC+"  format string")
+                print(bcolors.BOLD+"example:"+bcolors.ENDC)
+                print("'q -rq' :shows the queued and running jobs")
+                return
+            
+            if(parse_opt(opt,'r')):
+                cmd += 'R'
+            if(parse_opt(opt,'q')):
+                cmd += 'Q'
+            if(parse_opt(opt,'f')):
+                cmd += 'F'
+                          
+            if(not parse_opt(opt,'-')):
+                print(bcolors.WARNING+bcolors.BOLD+"Warning: use of deprecated option syntax!!")
+                print("Instead use -r, -f or -q. See the help with 'q -h'."+bcolors.ENDC)
+                cmd = opt
+            
+            (s,index) = parse_arg(opt,'s')
+            if(s):
+                cmd = [cmd,opt[index+1]]
+                if(cmd[0] == ''):
+                    cmd[0] = opt[0]
+        queue = self.scheduler_client.request_job_queue(cmd)
         print(queue.decode('string_escape'))
         #for l in queue.splitlines()[2:]:
             #print(l)
@@ -142,7 +171,7 @@ class Client(object):
             print(return_msg)
         
         if(return_msg.find("FAIL")>=0):
-            print("Submition failed")
+            print(bcolors.BOLD+bcolors.FAIL+"Submition failed"+bcolors.ENDC)
         else:
             print(bcolors.OKBLUE+"Submited job"+bcolors.ENDC) 
 #___________________________________________________________________________________________________
@@ -218,10 +247,12 @@ class Client(object):
             print(bcolors.BOLD+"example:"+bcolors.ENDC)
             print("'log 23 -eo' :shows the out log as well as the error log")
             return
+        
         job = self.scheduler_client.request_job(int(opt[0]))
         file_path = dict()
         
-        if(parse_opt(opt,'o')):
+        
+        if(parse_opt(opt,'o') or len(opt) == 1):
             file_path['log out'] = (job.log_out)
         
         if(parse_opt(opt,'e')):
@@ -230,11 +261,12 @@ class Client(object):
         for k,v in file_path.items():
             print(bcolors.BOLD+k+": "+v+bcolors.ENDC)
             if(not parse_opt(opt,'f')):
+                print("")
                 with open(v, 'r') as fin:
                     print fin.read()
 #___________________________________________________________________________________________________        
     def print_help(self):
-        usage = bcolors.BOLD+'plms [command] [command arguments]'+bcolors.ENDC+'\n'
+        usage = bcolors.BOLD+'usage: plms [command] [command arguments]'+bcolors.ENDC+'\n'
         usage +='      valid commands are:\n'
         for cmd_key in self.pre_cmd.keys():
                 usage +=bcolors.BOLD + "     %+15s      "%(cmd_key) + bcolors.ENDC+" %-15s\n"%(self.pre_cmd[cmd_key][1])
