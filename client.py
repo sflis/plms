@@ -12,7 +12,7 @@ import utils
 import pickle
 import re
 import collections
-from utils import parse_opt
+from utils import parse_opt,bcolors
 SchedulerInfo = collections.namedtuple("SchedulerInfo","name, tcp_addr, tcp_port, host")
 class Client(object):
     
@@ -112,7 +112,9 @@ class Client(object):
             #print(l)
 #___________________________________________________________________________________________________
     def cmd_stop(self,arg, opt):
-        if(opt[0] == "now"):
+        if(opt == None):
+            print(self.scheduler_client.stop_scheduler("GENTLE"))
+        elif(opt[0] == "now"):
             print(self.scheduler_client.stop_scheduler("NOW"))
         elif(opt[0] == "gentle"):
             print(self.scheduler_client.stop_scheduler("GENTLE"))
@@ -133,18 +135,20 @@ class Client(object):
 #___________________________________________________________________________________________________
     def cmd_submit(self,arg, opt):
         if(options == None):
-            print("Error: Must pass a command to submit")
+            print(bcolors.FAIL+bcolors.BOLD+"Error: Must pass a command to submit"+bcolors.ENDC)
+            return
         else:
             return_msg = self.scheduler_client.submit_simple_jobs([" ".join(options)], env = os.environ, current_dir = os.getcwd())
             print(return_msg)
+        
         if(return_msg.find("FAIL")>=0):
             print("Submition failed")
         else:
-            print("Submited job") 
+            print(bcolors.OKBLUE+"Submited job"+bcolors.ENDC) 
 #___________________________________________________________________________________________________
     def cmd_submit_list(self,arg, opt):
         if(opt == None):
-            print("Error: no file provided")
+            print(bcolors.FAIL+bcolors.BOLD+"Error: no file provided"+bcolors.ENDC)
         else:
             joblist = open(opt[0],'r').readlines()
             self.scheduler_client.submit_simple_jobs(joblist, env = os.environ)	
@@ -206,6 +210,14 @@ class Client(object):
             temp_client.cmd_avg_load([],[])
 #___________________________________________________________________________________________________        
     def cmd_log(self, arg, opt):
+        if(parse_opt(opt,'h')):
+            print(bcolors.BOLD+"usage: log [job id] [options]"+bcolors.ENDC)
+            print(bcolors.BOLD+"    -e  "+bcolors.ENDC+"    select error log")
+            print(bcolors.BOLD+"    -f   "+bcolors.ENDC+"   return only file name path")
+            print(bcolors.BOLD+"    -o    "+bcolors.ENDC+"  select out log")
+            print(bcolors.BOLD+"example:"+bcolors.ENDC)
+            print("'log 23 -eo' :shows the out log as well as the error log")
+            return
         job = self.scheduler_client.request_job(int(opt[0]))
         file_path = dict()
         
@@ -216,18 +228,18 @@ class Client(object):
             file_path['log err'] = (job.log_err)
 
         for k,v in file_path.items():
-            print(k+": "+v)
+            print(bcolors.BOLD+k+": "+v+bcolors.ENDC)
             if(not parse_opt(opt,'f')):
                 with open(v, 'r') as fin:
                     print fin.read()
 #___________________________________________________________________________________________________        
     def print_help(self):
-        usage = '%prog [command] [options]\n'
+        usage = bcolors.BOLD+'plms [command] [command arguments]'+bcolors.ENDC+'\n'
         usage +='      valid commands are:\n'
         for cmd_key in self.pre_cmd.keys():
-                usage +="     %+15s       %-15s\n"%(cmd_key,self.pre_cmd[cmd_key][1])
+                usage +=bcolors.BOLD + "     %+15s      "%(cmd_key) + bcolors.ENDC+" %-15s\n"%(self.pre_cmd[cmd_key][1])
         for cmd_key in self.commands.keys():
-                usage +="     %+15s       %-15s\n"%(cmd_key,self.commands[cmd_key][1])
+                usage +=bcolors.BOLD + "     %+15s    "%(cmd_key) + bcolors.ENDC+"   %-15s\n"%(self.commands[cmd_key][1])
         return usage              
 
 
@@ -245,7 +257,7 @@ def main(command, options, client):
         client.commands[command][0](None, options)
     else:
         if(not inpre):
-            print("Command '%s' not recognized"%command)
+            print(bcolors.WARNING+"Command '%s' not recognized"%command+bcolors.ENDC)
             print(client.print_help())
     client.save_state()
 
@@ -258,7 +270,7 @@ if(__name__ == '__main__'):
     usage =  client.print_help()
     #parser = OptionParser()
     #parser.set_usage(usage)
-    if(parse_opt(sys.argv[1:],'h')):
+    if(parse_opt(sys.argv[1:2],'h')):
         print(usage)
         sys.exit(0)
     command = sys.argv[1]

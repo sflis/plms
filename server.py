@@ -20,7 +20,7 @@ from utils import job_process
 from utils import Job
 from utils import Message
 from utils import RetMessage
-from utils import parse
+from utils import parse,bcolors
 
 #===================================================================================================
 #++++++Class: Server++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -319,7 +319,7 @@ class PLMSServer(Daemon):
         now = time.time()
         tot_running_time = 0
         if(format_str == None):
-            printed_queue="    ID     STATUS       SUBMITED            RUNNING TIME         CMD\n"
+            printed_queue= bcolors.BOLD+"    ID     STATUS       SUBMITED            RUNNING TIME         CMD\n"+bcolors.ENDC
             if(opt.find("R") >= 0):
                 for j in self.jobs:
                     run_time = now - j[1].start_time
@@ -439,7 +439,7 @@ class PLMSServer(Daemon):
         Checks if the jobs in the job list are running and starts new jobs from the queue
         when avaiable job slots open.
         '''
-        #fail_recv = False
+
         job_message = ""
         while(True):
             # If no message waits recv will throw an exception
