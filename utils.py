@@ -231,12 +231,13 @@ class RetMessage(object):
         self = pickle.loads(msg)
 #=====================================================================================================        
 class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    CYAN = '\033[96m'
+    HEADER = '\033[35m\033[95m'
+    OKBLUE = '\033[34m\033[94m'
+    OKGREEN = '\033[32m\033[92m'
+    WARNING = '\033[33m\033[93m'
+    FAIL = '\033[1;31m'
+    RED = '\033[31m\033[91m'
+    CYAN = '\033[36m\033[96m'
     LIGHT_BLUE = '\033[94m'
     LIGHT_MAGENTA = '\033[95m'
     ENDC = '\033[0m'
@@ -263,6 +264,6 @@ def running(str):
 def finished(str):
     return bcolors.OKGREEN+str+bcolors.ENDC
 def terminated(str):
-    return bcolors.FAIL+str+bcolors.ENDC
+    return bcolors.RED+str+bcolors.ENDC
 
 colors = {'idle':queued, 'running':running, 'finished':finished, 'terminated':terminated, 'removed':terminated}
