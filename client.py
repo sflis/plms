@@ -12,7 +12,8 @@ import utils
 import pickle
 import re
 import collections
-from utils import parse_opt,parse_arg,bcolors
+from utils import parse_opt,parse_arg,bcolors, Job,colors
+from utils import bcolors as bc
 SchedulerInfo = collections.namedtuple("SchedulerInfo","name, tcp_addr, tcp_port, host")
 class Client(object):
     
@@ -33,7 +34,7 @@ class Client(object):
  
         self.load_state()
         self.pre_cmd =  {'cs'          :(self.pre_cmd_change_sch,'change scheduler'),
-                         'as'          :(self.pre_cmd_get_available_sch,'list available scheduers'),
+                         'as'          :(self.pre_cmd_get_available_sch,'list available schedulers'),
                          'add-remote'  :(self.cmd_add_remote,'add remote scheduler'),
                          'which'       :(self.cmd_which,'which scheduler is used'),
                          'avgloadl'    :(self.cmd_avgloadl,'list the average load on the hosts of the available schedulers'),
@@ -101,12 +102,11 @@ class Client(object):
 #___________________________________________________________________________________________________
     def pre_cmd_change_sch(self,arg, opt):
         self.current_scheduler = self.available_schedulers[opt[0]]
-#___________________________________________________________________________________________________
+#___________________________________________________________________________________________________    
     def cmd_print_queue(self,arg, opt):
-        cmd = ''
-        
+        format_str = None
         if(opt == None):
-            cmd = 'RQ'
+            sel = Selector(["idle","running"])
         else:
             if(parse_opt(opt,'h')):
                 print(bcolors.BOLD+"usage: q [options]"+bcolors.ENDC)
@@ -117,28 +117,29 @@ class Client(object):
                 print(bcolors.BOLD+"example:"+bcolors.ENDC)
                 print("'q -rq' :shows the queued and running jobs")
                 return
-            
+            sel = Selector()
             if(parse_opt(opt,'r')):
-                cmd += 'R'
+                sel.status_list.append("running")
             if(parse_opt(opt,'q')):
-                cmd += 'Q'
+                sel.status_list.append("idle")
             if(parse_opt(opt,'f')):
-                cmd += 'F'
-                          
-            if(not parse_opt(opt,'-')):
-                print(bcolors.WARNING+bcolors.BOLD+"Warning: use of deprecated option syntax!!")
-                print("Instead use -r, -f or -q. See the help with 'q -h'."+bcolors.ENDC)
-                cmd = opt
+                sel.status_list += ["finished","terminated","removed"]
+            index = 0
+            for o in opt:
+                if(not parse_opt(o,'-')):
+                    if(opt[index-1] == '-s'):
+                        continue
+                    print(bcolors.FAIL+bcolors.BOLD+"Error: use of deprecated option syntax `%s'!!"%o+bcolors.ENDC)
+                    print(bcolors.HEADER+"Instead use -r, -f or -q. See the help with 'q -h'."+bcolors.ENDC)
+                    return
+                index += 1
             
             (s,index) = parse_arg(opt,'s')
             if(s):
-                cmd = [cmd,opt[index+1]]
-                if(cmd[0] == ''):
-                    cmd[0] = opt[0]
-        queue = self.scheduler_client.request_job_queue(cmd)
-        print(queue[21:].decode('string_escape'))
-        #for l in queue.splitlines()[2:]:
-            #print(l)
+                format_str = opt[index + 1]
+                    
+        jobs, message = self.scheduler_client.request_job()
+        print(print_queue(jobs,sel,format_str,message).decode('string_escape'))   
 #___________________________________________________________________________________________________
     def cmd_stop(self,arg, opt):
         if(opt == None):
@@ -148,7 +149,7 @@ class Client(object):
         elif(opt[0] == "gentle"):
             print(self.scheduler_client.stop_scheduler("GENTLE"))
         else:
-            print("Error") 
+            print(bcolors.BOLD+bcolors.FAIL+"Error: no valid stop mode given"+bcolors.ENDC) 
 #___________________________________________________________________________________________________
     def cmd_rm(self, arg, opt):
         if(opt == None):
@@ -167,7 +168,7 @@ class Client(object):
             print(bcolors.FAIL+bcolors.BOLD+"Error: Must pass a command to submit"+bcolors.ENDC)
             return
         else:
-            return_msg = self.scheduler_client.submit_simple_jobs([" ".join(options)], env = os.environ, current_dir = os.getcwd())
+            return_msg = self.scheduler_client.submit_simple_jobs([" ".join(options)], env = os.environ, wdir = os.getcwd(), user = os.environ['USER'])
             #print(return_msg)
         
         if(return_msg.find("FAIL")>=0):
@@ -191,18 +192,18 @@ class Client(object):
     def cmd_submit_jdf(self, arg, opt):
         jdf_file = open(opt[0],'r')
         jdf = jdf_file.readlines()
-        exe = utils.parse(jdf,"Executable",separator='=')
-        args = utils.parse(jdf,"Args",separator='=',complete_line=True)
-        use_env = utils.parse(jdf,"EnvPass",separator='=')
-        out = utils.parse(jdf,"Out",separator='=')
-        err = utils.parse(jdf,"Err",separator='=')
+        exe = utils.parse(jdf, "Executable", separator='=')
+        args = utils.parse(jdf, "Args", separator='=', complete_line=True)
+        use_env = utils.parse(jdf, "EnvPass", separator='=')
+        out = utils.parse(jdf, "Out", separator='=')
+        err = utils.parse(jdf, "Err", separator='=')
         
         if(use_env == "true"):
             env = os.environ
         else:
             env = None
         
-        self.scheduler_client.submit_job_description(exe, args , out , err, "Unknown", env)
+        self.scheduler_client.submit_job_description(exe, args , out , err, os.environ['USER'], env)
 #___________________________________________________________________________________________________
     def cmd_which(self, arg, opt):
         if(self.current_scheduler != None):
@@ -248,7 +249,7 @@ class Client(object):
             print("'log 23 -eo' :shows the out log as well as the error log")
             return
         
-        job = self.scheduler_client.request_job(int(opt[0]))
+        job,msg = self.scheduler_client.request_job(int(opt[0]))
         file_path = dict()
         
         
@@ -276,6 +277,88 @@ class Client(object):
 
 
 #___________________________________________________________________________________________________        
+#===================================================================================================
+def print_queue(jobs, select = None, format_str = None, message = None):
+        import time
+        now = time.time()
+        tot_running_time = 0
+
+        if(select == None):
+            def select(job):
+                return False
+        running_count = 0
+        idle_count = 0
+        if(format_str == None):
+            printed_queue= bcolors.BOLD+"    ID     STATUS       SUBMITED            RUNNING TIME         CMD\n"+bcolors.ENDC
+            running_time_str = r"%(run_time_days)02dd  %(run_time_hours)02d:%(run_time_minutes)02d:%(run_time_seconds)05.2fh"
+                
+            for jid,job in jobs.items():
+
+                if(select(job)):
+                    continue
+                
+                if(job.status == "finished" or job.status == "terminated"):
+                    job.update(job.end_time)
+                    tot_running_time += job.prop_dict["run_time"]
+                elif(job.status == "running"):
+                    job.update(now)
+                    running_count += 1
+                    tot_running_time += job.prop_dict["run_time"]
+                else: 
+                    job.update(now)
+                    running_time_str = "--d  --:--:--.--h"
+                    idle_count += 1 
+                submited_time = time.strftime("%Y-%m-%d %H:%M:%S",job.submit_time) 
+                format_str = bc.bold("%(id)06d")+":"+colors[job.status]("%(status)10s")+": "+submited_time+" : "+bc.gen(running_time_str,bc.CYAN)+": %(cmdc)0.100s\n"
+                printed_queue += job.formated_output(format_str)
+                                  
+                
+            d = int(tot_running_time/(24*3600))
+            h = int((tot_running_time-d*(24*3600))/3600)
+            m = int((tot_running_time-d*(24*3600)-h*3600)/60)
+            s = (tot_running_time-d*(24*3600)-h*3600-m*60)
+            running_time_str = "%02dd  %02d:%02d:%05.2fh"%(d,h,m,s)
+            printed_queue += (bc.head("idle jobs: ")+bc.bold("%d")+bc.head(", running jobs: ")+bc.bold("%d")+bc.head(", total run time for selection: ")+bc.bold("%s")+r"\n")%(idle_count,running_count,running_time_str)
+            printed_queue += ("Scheduler: "+bc.bold("%s")+",     Host: "+bc.bold("%s"))%(message.scheduler_name,message.host)
+        else:
+            test = Job(-1,"",now,"")
+            test.update(now)
+            try:
+                s = test.formated_output(format_str)
+            except KeyError, e:
+                s = bc.err("Key error:\nKey %s not found"%e)
+                return s
+            printed_queue = ""
+            for jid,job in jobs.items():
+
+                if(select(job)):
+                    continue
+                job.update(now)
+                printed_queue += job.formated_output(format_str)
+
+        return printed_queue
+#===================================================================================================
+class Selector(object):
+    def  __init__(self, status_list = list()):
+        self.status_list = status_list
+     
+    def __call__(self,job):
+        ret = True
+        if(job.status in self.status_list):
+            ret = False
+            
+        return ret
+    
+    def select(self, job):
+        ret = True
+        if(job.status in self.status_list):
+            ret = False
+            
+        return ret
+        
+        
+        
+#===================================================================================================
 def main(command, options, client):
     
     inpre = False

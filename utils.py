@@ -124,10 +124,10 @@ class Job(object):
     and to keep some statistics about it.
     '''
     
-    statstr_2_id = {"idle":0,"running":10,"held":20,"finished":30,"Terminated":40}
-    statid_2_str = {0:"idle",10:"running",20:"held",30:"finished",40:"Terminated"}
+    statstr_2_id = {"idle":0,"running":10,"held":20,"finished":30,"terminated":40,"removed":50}
+    statid_2_str = {0:"idle",10:"running",20:"held",30:"finished",40:"terminated",50:"removed"}
     
-    def __init__(self, id, cmd, submit_time, user, log_out='/dev/null', log_err='/dev/null', env = None, name = '', wdir = None):
+    def __init__(self, id, cmd, submit_time, user, log_out='/dev/null', log_err='/dev/null', env = None, name = '', wdir = None, shell = False):
         self.id = id
         self.cmd = cmd
         self.status = "idle"
@@ -142,13 +142,20 @@ class Job(object):
         self.prop_dict = dict()
         self.name = name
         self.wdir = wdir
+        self.shell = shell
+        self.compress_cmd = 100
     def update(self,time):
         def get_time_tuple(time):
             d = int(time/(24*3600))
             h = int((time-d*(24*3600))/3600)
             m = int((time-d*(24*3600)-h*3600)/60)
             s = (time-d*(24*3600)-h*3600-m*60)
-            return (d,h,m,s)    
+            return (d,h,m,s)
+        if(len(self.cmd)>self.compress_cmd):
+            l = int(self.compress_cmd/2.0)
+            self.prop_dict["cmdc"] = self.cmd[:l-3]+bcolors.bold("...",'\033[38;5;44m')+self.cmd[-l:]
+        else:
+            self.prop_dict["cmdc"] = self.cmd
         self.prop_dict["cmd"] = self.cmd
         self.prop_dict["status"] = self.status
         self.prop_dict["status_id"] = Job.statstr_2_id[self.status]
@@ -223,6 +230,33 @@ class bcolors:
     OKGREEN = '\033[92m'
     WARNING = '\033[93m'
     FAIL = '\033[91m'
+    CYAN = '\033[96m'
+    LIGHT_BLUE = '\033[94m'
+    LIGHT_MAGENTA = '\033[95m'
     ENDC = '\033[0m'
     BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'        
+    UNDERLINE = '\033[4m'
+    
+    @staticmethod
+    def err(str):
+        return bcolors.FAIL+bcolors.BOLD+str+bcolors.ENDC
+    @staticmethod
+    def gen(str,opt):
+        return opt+str+bcolors.ENDC
+    @staticmethod
+    def bold(str,opt=''):
+        return opt+bcolors.BOLD+str+bcolors.ENDC
+    @staticmethod
+    def head(str):
+        return bcolors.HEADER+str+bcolors.ENDC
+    
+def queued(str):
+    return bcolors.WARNING+str+bcolors.ENDC
+def running(str):
+    return bcolors.OKBLUE+str+bcolors.ENDC
+def finished(str):
+    return bcolors.OKGREEN+str+bcolors.ENDC
+def terminated(str):
+    return bcolors.FAIL+str+bcolors.ENDC
+
+colors = {'idle':queued, 'running':running, 'finished':finished, 'terminated':terminated, 'removed':terminated}

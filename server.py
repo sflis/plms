@@ -108,7 +108,6 @@ class PLMSServer(Daemon):
         self.quit = False
         self.logging = True
         self.commands = {'SUBMIT_JOBS'  :self.command_SUBMIT_JOBS,
-                         'REQUEST_QUEUE':self.command_REQUEST_QUEUE,
                          'CONFIGURE'    :self.command_CONFIGURE,
                          'REMOVE_JOBS'  :self.command_REMOVE_JOBS,
                          'STOP'         :self.command_STOP,
@@ -197,7 +196,9 @@ class PLMSServer(Daemon):
         return f.read()
 #___________________________________________________________________________________________________
     def command_STOP(self, msg):
-        
+        '''Processes the stop command message
+        '''
+        #Stopping the scheduler 'NOW' termiates any running jobs
         if(msg.opt[0] == "NOW"):
             return_msg = "SUCCESS\n"
             n = self.remove_jobs(None, "unkown")
@@ -205,6 +206,7 @@ class PLMSServer(Daemon):
             return_msg += "Stopping scheduler..."
             self.log("Stopping scheduler now!")      
             self.quit = True
+        #Stopping the scheduler 'GENTLE' exits the scheduler when the last running job stops.
         elif(msg.opt[0] == "GENTLE"):
             return_msg = "SUCCESS\n"
             return_msg += "Stopping scheduler..."
@@ -223,10 +225,13 @@ class PLMSServer(Daemon):
     
 #___________________________________________________________________________________________________
     def command_REQUEST_JOBS(self, msg):        
-        
+        '''Returns a message of the requested job or a list of requested jobs. 
+        '''
         return_msg = RetMessage(server = self,status = "SUCCES")
-        if(msg.opt[0] in self.all_jobs.keys()):
-            return_msg.msg['job'] = self.all_jobs[msg.opt[0]]
+        if(msg.opt == None):
+            return_msg.msg['jobs'] = self.all_jobs
+        elif(msg.opt[0] in self.all_jobs.keys()):
+            return_msg.msg['jobs'] = self.all_jobs[msg.opt[0]]
         else:
             return_msg.status = "FAIL"
             return_msg.msg["error"] = "Job id %d not found"%msg.opt[0]
@@ -257,14 +262,16 @@ class PLMSServer(Daemon):
         
 #___________________________________________________________________________________________________
     def parse_job_submit_list(self, msg):
+        
         self.log("Parsing job submit list")
+        
         if(msg.opt[0] == 'SIMPLE'):
             for j in msg.msg["cmd_list"]:
                 self.add_job(j, msg.user, 
                              self.default_log_path + str(self.id_count)+".out", 
                              self.default_log_path + str(self.id_count)+".err", 
                              env = msg.msg["env"], 
-                             current_dir = msg.msg["current_dir"])
+                             current_dir = msg.msg["wdir"])
             return len(msg.msg["cmd_list"])
         elif(msg.opt[0] == 'SIMPLE_LOG'):
             log_out_path = msg.msg["log_out_path"] 
@@ -314,75 +321,6 @@ class PLMSServer(Daemon):
         self.all_jobs[self.id_count] = job        
         self.id_count +=1
         
-#___________________________________________________________________________________________________
-    def print_queue(self, opt, format_str = None):
-        now = time.time()
-        tot_running_time = 0
-        if(format_str == None):
-            printed_queue= bcolors.BOLD+"    ID     STATUS       SUBMITED            RUNNING TIME         CMD\n"+bcolors.ENDC
-            if(opt.find("R") >= 0):
-                for j in self.jobs:
-                    run_time = now - j[1].start_time
-                    d = int(run_time/(24*3600))
-                    h = int((run_time-d*(24*3600))/3600)
-                    m = int((run_time-d*(24*3600)-h*3600)/60)
-                    s = (run_time-d*(24*3600)-h*3600-m*60)
-                    running_time_str = "%02dd  %02d:%02d:%05.2fh"%(d,h,m,s)
-                    printed_queue += "  %06d:%10s: %s : %s : %s\n"%(j[1].id, j[1].status, time.strftime("%Y-%m-%d %H:%M:%S",j[1].submit_time), running_time_str, j[1].cmd[:15])
-                    tot_running_time +=run_time  
-            if(opt.find("Q") >= 0):
-                for j in self.queue:
-                    printed_queue += "  %06d:%10s: %s :                   : %s\n"%(j.id,j.status, time.strftime("%Y-%m-%d %H:%M:%S",j.submit_time),j.cmd[:15])
-            if(opt.find("F") >= 0):
-                for j in self.finished_jobs:
-                    
-                    if(opt.find("U")>=0):
-                        if(math.isnan(j.cpu_time)):
-                            run_time = 0
-                        else:
-                            run_time = j.cpu_time
-                    else:
-                        run_time = j.end_time - j.start_time
-                    
-                    d = int(run_time/(24*3600))
-                    h = int((run_time-d*(24*3600))/3600)
-                    m = int((run_time-d*(24*3600)-h*3600)/60)
-                    s = (run_time-d*(24*3600)-h*3600-m*60)
-                    running_time_str = "%02dd  %02d:%02d:%05.2fh"%(d,h,m,s)
-                    printed_queue += "  %06d:%10s: %s : %s : %s\n"%(j.id, j.status, time.strftime("%Y-%m-%d %H:%M:%S",j.submit_time), running_time_str, j.cmd[:15])
-                    tot_running_time +=run_time
-                
-                
-            d = int(tot_running_time/(24*3600))
-            h = int((tot_running_time-d*(24*3600))/3600)
-            m = int((tot_running_time-d*(24*3600)-h*3600)/60)
-            s = (tot_running_time-d*(24*3600)-h*3600-m*60)
-            running_time_str = "%02dd  %02d:%02d:%05.2fh"%(d,h,m,s)
-            printed_queue += "idle jobs: %d, running jobs: %d, total run time: %s\n"%(len(self.queue),len(self.jobs),running_time_str)
-            printed_queue += "Scheduler: %s,     Host: %s"%(self.scheduler_name,self.host)
-        else:
-            test = Job(-1,"",now,"")
-            test.update(now)
-            try:
-                s = test.formated_output(format_str)
-            except KeyError:
-                s = "Key error\n"
-                return s
-            printed_queue = ""
-            if(opt.find("R") >= 0):
-                for j in self.jobs:  
-                    j[1].update(now)
-                    printed_queue += j[1].formated_output(format_str)
-            if(opt.find("Q") >= 0):
-                for j in self.queue:
-                    j.update(now)
-                    printed_queue += j.formated_output(format_str)
-            if(opt.find("F") >= 0):
-                for j in self.finished_jobs:
-                    j.update(now)
-                    printed_queue += j.formated_output(format_str)
-        return printed_queue
-
 #___________________________________________________________________________________________________    
     def remove_jobs(self, ids, user):
         
@@ -392,7 +330,7 @@ class PLMSServer(Daemon):
             self.queue = list()
             for j in self.jobs:
                 j[0].terminate()
-                j[1].status = "Terminated"
+                j[1].status = "terminated"
                 j[1].end_time = time.time()
                 j[1].cpu_time = float("nan")
                 self.finished_jobs.append(j[1])
@@ -405,7 +343,12 @@ class PLMSServer(Daemon):
                 if(j.id not in ids):
                     queue.append(j)
                 else:
+                    j.status = "removed"
+                    j.end_time = time.time()
+                    j.cpu_time = float("nan")
+                    self.finished_jobs.append(j)
                     n_jobs_removed +=1
+                    
             self.queue = queue
             
         jobs = list()
@@ -414,7 +357,7 @@ class PLMSServer(Daemon):
                 jobs.append(j)
             else:
                 j[0].terminate()
-                j[1].status = "Terminated"
+                j[1].status = "terminated"
                 j[1].end_time = time.time()
                 j[1].cpu_time = float("nan")
                 self.finished_jobs.append(j[1])

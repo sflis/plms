@@ -40,7 +40,7 @@ class SchedulerClient(object):
         try:
             self.socket.send(msg, zmq.NOBLOCK)
         except:
-            print("Failed to send message")
+            print(bcolors.BOLD+bcolors.FAIL+"Failed to send message"+bcolors.ENDC)
         return_msg = ""
 
         try:
@@ -52,26 +52,26 @@ class SchedulerClient(object):
                         return_msg = self.socket.recv(zmq.NOBLOCK)
                         break
                 else:
-                    print("Timed out")
+                    print(bcolors.BOLD+bcolors.FAIL+"Timed out"+bcolors.ENDC)
                     break
         except:
-            print("Error while recieveing message")
+            print(bcolors.BOLD+bcolors.FAIL+"Error while recieveing message"+bcolors.ENDC)
             
         return return_msg
 #___________________________________________________________________________________________________    
-    def submit_simple_jobs(self, cmd_list, outlog_path  = None, errlog_path = None, user = "Unknown", env = None, current_dir = None):
+    def submit_simple_jobs(self, cmd_list, outlog_path  = None, errlog_path = None, user = "Unknown", env = None, wdir = None):
         if(outlog_path == None or errlog_path == None):
             msg = Message('SUBMIT_JOBS', 'SIMPLE', user)
             msg.msg["cmd_list"] = cmd_list
             msg.msg["env"] = env
-            msg.msg["current_dir"] = current_dir  
+            msg.msg["wdir"] = wdir  
         else:
             msg = Message( 'SUBMIT_JOBS', 'SIMPLE_LOG', user)
             msg.msg["cmd_list"] = cmd_list
             msg.msg["env"] = env
             msg.msg["outlog_path"] = outlog_path 
             msg.msg["errlog_path"] = errlog_path
-            msg.msg["current_dir"] = current_dir   
+            msg.msg["wdir"] = wdir   
             
         #print(msg.msg["current_dir"])
         return self.send_msg(msg.compose())
@@ -89,10 +89,6 @@ class SchedulerClient(object):
 #___________________________________________________________________________________________________    
     def classical_submit(self, executable, var, out, err, user, queue, init_dir):
         print("Not implemented yet")
-#___________________________________________________________________________________________________
-    def request_job_queue(self, opt, user = ""):
-        msg = Message('REQUEST_QUEUE', opt, user)
-        return self.send_msg(msg.compose())
 #___________________________________________________________________________________________________
     def stop_scheduler(self, opt = "NOW", user = ""):
         msg = Message('STOP', opt, user)
@@ -125,8 +121,8 @@ class SchedulerClient(object):
         msg.msg["job_ids"] = ids
         return self.send_msg(msg.compose())
 #___________________________________________________________________________________________________    
-    def request_job(self, id, user = "Unknown"):
-        msg = Message('REQUEST_JOBS', [id], user)
+    def request_job(self, id = None, user = "Unknown"):
+        msg = Message('REQUEST_JOBS', id, user)
         
         retmsg = self.send_msg(msg.compose())
         #print(retmsg)
@@ -137,7 +133,7 @@ class SchedulerClient(object):
         if('error' in retmsg.msg.keys()):
             print(bcolors.BOLD+bcolors.FAIL+retmsg.msg['error']+bcolors.ENDC)
             sys.exit(0)
-        return retmsg.msg['job']
+        return retmsg.msg['jobs'], retmsg
 #___________________________________________________________________________________________________        
 import signal, socket
 try:
