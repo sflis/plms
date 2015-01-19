@@ -59,29 +59,28 @@ class SchedulerClient(object):
             
         return return_msg
 #___________________________________________________________________________________________________    
-    def submit_simple_jobs(self, cmd_list, outlog_path  = None, errlog_path = None, user = "Unknown", env = None, wdir = None):
+    def submit_simple_jobs(self, cmd_list, outlog_path  = None, errlog_path = None, user = "Unknown", env = None, wdir = None, shell = True):
         if(outlog_path == None or errlog_path == None):
             msg = Message('SUBMIT_JOBS', 'SIMPLE', user)
-            msg.msg["cmd_list"] = cmd_list
-            msg.msg["env"] = env
-            msg.msg["wdir"] = wdir  
         else:
             msg = Message( 'SUBMIT_JOBS', 'SIMPLE_LOG', user)
-            msg.msg["cmd_list"] = cmd_list
-            msg.msg["env"] = env
             msg.msg["outlog_path"] = outlog_path 
             msg.msg["errlog_path"] = errlog_path
-            msg.msg["wdir"] = wdir   
-            
-        #print(msg.msg["current_dir"])
+
+        msg.msg["cmd_list"] = cmd_list
+        msg.msg["env"] = env
+        msg.msg["wdir"] = wdir
+        msg.msg["shell"] = shell
+
         return self.send_msg(msg.compose())
         
 #___________________________________________________________________________________________________    
-    def submit_job_description(self, exe, args , outlog  = None, errlog = None, user = "Unknown", env = None):
+    def submit_job_description(self, exe, args , outlog  = None, errlog = None, user = "Unknown", env = None, shell = False):
         msg = Message( 'SUBMIT_JOBS', 'JOB_DESCRIPTION', user)
         msg.msg["executable"] = exe
         msg.msg["args"] = args
         msg.msg["env"] = env
+        msg.msg["shell"] = shell
         msg.msg["outlog"] = outlog 
         msg.msg["errlog"] = errlog
                 

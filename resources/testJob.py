@@ -4,6 +4,7 @@ import numpy as np
 import time
 import sys
 import glob
+import os
 if(__name__ == '__main__'):
     
     scale = sys.argv[1]
@@ -13,3 +14,6 @@ if(__name__ == '__main__'):
     delay= float(scale)*np.random.uniform()
     time.sleep(int(delay))
     print("This is a test job with",delay,"delay.")
+    print(os.environ.keys())
+    print(os.environ)
+    

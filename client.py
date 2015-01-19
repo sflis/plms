@@ -168,8 +168,12 @@ class Client(object):
             print(bcolors.FAIL+bcolors.BOLD+"Error: Must pass a command to submit"+bcolors.ENDC)
             return
         else:
-            return_msg = self.scheduler_client.submit_simple_jobs([" ".join(options)], env = os.environ, wdir = os.getcwd(), user = os.environ['USER'])
-            #print(return_msg)
+            if(parse_opt(opt,'e')):
+                env = None
+            else:
+                env = os.environ
+                #" ".join(opt[0])
+            return_msg = self.scheduler_client.submit_simple_jobs([opt[0]], env = env, wdir = os.getcwd(), user = os.environ['USER'])
         
         if(return_msg.find("FAIL")>=0):
             print(bcolors.BOLD+bcolors.FAIL+"Submition failed"+bcolors.ENDC)
@@ -192,18 +196,25 @@ class Client(object):
     def cmd_submit_jdf(self, arg, opt):
         jdf_file = open(opt[0],'r')
         jdf = jdf_file.readlines()
-        exe = utils.parse(jdf, "Executable", separator='=')
-        args = utils.parse(jdf, "Args", separator='=', complete_line=True)
+        exe     = utils.parse(jdf, "Executable", separator='=')
+        args    = utils.parse(jdf, "Args", separator='=', complete_line=True)
         use_env = utils.parse(jdf, "EnvPass", separator='=')
+        shell   = utils.parse(jdf, "Shell", separator='=')
+        
+        if(shell == "True" or shell == "true"):
+            shell = True
+        else:
+            shell = False
+        
         out = utils.parse(jdf, "Out", separator='=')
         err = utils.parse(jdf, "Err", separator='=')
-        
+        print(args,exe)
         if(use_env == "true"):
             env = os.environ
         else:
             env = None
         
-        self.scheduler_client.submit_job_description(exe, args , out , err, os.environ['USER'], env)
+        self.scheduler_client.submit_job_description(exe, args , out , err, os.environ['USER'], env, shell)
 #___________________________________________________________________________________________________
     def cmd_which(self, arg, opt):
         if(self.current_scheduler != None):
@@ -249,16 +260,16 @@ class Client(object):
             print("'log 23 -eo' :shows the out log as well as the error log")
             return
         
-        job,msg = self.scheduler_client.request_job(int(opt[0]))
+        job, msg = self.scheduler_client.request_job(int(opt[0]))
         file_path = dict()
         
         
         if(parse_opt(opt,'o') or len(opt) == 1):
             file_path['log out'] = (job.log_out)
-        
+            
         if(parse_opt(opt,'e')):
             file_path['log err'] = (job.log_err)
-
+                
         for k,v in file_path.items():
             print(bcolors.BOLD+k+": "+v+bcolors.ENDC)
             if(not parse_opt(opt,'f')):
@@ -290,24 +301,26 @@ def print_queue(jobs, select = None, format_str = None, message = None):
         idle_count = 0
         if(format_str == None):
             printed_queue= bcolors.BOLD+"    ID     STATUS       SUBMITED            RUNNING TIME         CMD\n"+bcolors.ENDC
-            running_time_str = r"%(run_time_days)02dd  %(run_time_hours)02d:%(run_time_minutes)02d:%(run_time_seconds)05.2fh"
+            running_time_str_ = r"%(run_time_days)02dd  %(run_time_hours)02d:%(run_time_minutes)02d:%(run_time_seconds)05.2fh"
                 
             for jid,job in jobs.items():
 
                 if(select(job)):
                     continue
-                
                 if(job.status == "finished" or job.status == "terminated"):
                     job.update(job.end_time)
                     tot_running_time += job.prop_dict["run_time"]
+                    running_time_str = running_time_str_
                 elif(job.status == "running"):
                     job.update(now)
                     running_count += 1
                     tot_running_time += job.prop_dict["run_time"]
+                    running_time_str = running_time_str_
                 else: 
                     job.update(now)
                     running_time_str = "--d  --:--:--.--h"
                     idle_count += 1 
+                    
                 submited_time = time.strftime("%Y-%m-%d %H:%M:%S",job.submit_time) 
                 format_str = bc.bold("%(id)06d")+":"+colors[job.status]("%(status)10s")+": "+submited_time+" : "+bc.gen(running_time_str,bc.CYAN)+": %(cmdc)0.100s\n"
                 printed_queue += job.formated_output(format_str)

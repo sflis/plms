@@ -46,7 +46,7 @@ class PLMSServer(Daemon):
         
         self.log_output = ""
         self.hold_output = True
-        
+        self.version = utils.VERSION
         if(os.path.isfile(self.configure_file) and conf == None):
             self.log("Found configure file, loading configuration")
             conf_file = open(self.configure_file,'r')
@@ -256,7 +256,6 @@ class PLMSServer(Daemon):
             return_msg = self.commands[msg.cmd](msg)
         else:
             return_msg = "FAIL\n"
-            return_msg += lines
         self.log("Returning message to client")    
         self.client_socket.send(return_msg)
         
@@ -271,7 +270,8 @@ class PLMSServer(Daemon):
                              self.default_log_path + str(self.id_count)+".out", 
                              self.default_log_path + str(self.id_count)+".err", 
                              env = msg.msg["env"], 
-                             current_dir = msg.msg["wdir"])
+                             current_dir = msg.msg["wdir"],
+                             shell = msg.msg["shell"])
             return len(msg.msg["cmd_list"])
         elif(msg.opt[0] == 'SIMPLE_LOG'):
             log_out_path = msg.msg["log_out_path"] 
@@ -281,7 +281,8 @@ class PLMSServer(Daemon):
                              log_out_path + str(self.id_count)+".out", 
                              log_err_path + str(self.id_count)+".err",
                              env = msg.msg["env"], 
-                             current_dir = msg.msg["current_dir"])
+                             current_dir = msg.msg["current_dir"],
+                             shell = msg.msg["shell"])
             return len(msg.msg["cmd_list"])
         elif(msg.opt[0] == 'JOB_DESCRIPTION'):
             log_out = msg.msg["outlog"] 
@@ -290,7 +291,7 @@ class PLMSServer(Daemon):
             cmd += " "+msg.msg["args"]
             #for arg in msg.msg["args"]:
                 #cmd +=" "+arg
-            self.add_job(cmd, msg.user, log_out, log_err, env = msg.msg["env"])
+            self.add_job(cmd, msg.user, log_out, log_err, env = msg.msg["env"], shell = msg.msg["shell"])
             return 1
         else:
             return -1
@@ -307,7 +308,7 @@ class PLMSServer(Daemon):
             print(s)
 
 #___________________________________________________________________________________________________
-    def add_job(self, cmd, user, log_out , log_err, env, current_dir = None ):
+    def add_job(self, cmd, user, log_out , log_err, env, current_dir = None, shell = False ):
         job = Job(self.id_count,
                 cmd,
                 time.localtime(),
@@ -316,7 +317,8 @@ class PLMSServer(Daemon):
                 log_err,
                 env,
                 '',
-                current_dir)
+                current_dir,
+                shell)
         self.queue.append(job)
         self.all_jobs[self.id_count] = job        
         self.id_count +=1

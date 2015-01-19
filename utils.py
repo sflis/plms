@@ -9,6 +9,8 @@ from subprocess import call
 import subprocess
 from multiprocessing import Process
 
+
+VERSION = 0.2
 #function to create directory that check if the directory alread have been created.
 def ensure_dir(f):
     d = os.path.dirname(f)
@@ -69,24 +71,24 @@ def job_process(socket_name, job_description):
     os.dup2(so.fileno(), sys.stdout.fileno())
     os.dup2(se.fileno(), sys.stderr.fileno())
     
-    #print(job_description.env)
     #setting the enviroment for the job
     if(job_description.env != None):
-        #import os
         os.environ.update(job_description.env)
-
-    if(job_description.env == None):
-        job_description.env = os.environ
         
     if(job_description.wdir != None):
         os.chdir(job_description.wdir) 
     else:
         job_description.wdir='/'
+    
     # launch the job
     failed = False
     try:
-        start_time = time.time()
-        return_code = subprocess.call(job_description.cmd, cwd=job_description.wdir, shell=True) #,cwd=job_description.current_dir
+        if(job_description.shell):
+            start_time = time.time()
+            return_code = subprocess.call(job_description.cmd, cwd=job_description.wdir, shell=True) #,cwd=job_description.current_dir
+        else:
+            start_time = time.time()
+            return_code = subprocess.call(job_description.cmd.split(), cwd=job_description.wdir, shell=False)
     except:
         failed = True
         return_code = -1
@@ -151,11 +153,15 @@ class Job(object):
             m = int((time-d*(24*3600)-h*3600)/60)
             s = (time-d*(24*3600)-h*3600-m*60)
             return (d,h,m,s)
+        if(self.cmd[-1] == '\n'):
+            e = -2
+        else:
+            e = len(self.cmd)
         if(len(self.cmd)>self.compress_cmd):
             l = int(self.compress_cmd/2.0)
-            self.prop_dict["cmdc"] = self.cmd[:l-3]+bcolors.bold("...",'\033[38;5;44m')+self.cmd[-l:]
+            self.prop_dict["cmdc"] = self.cmd[:l-3]+bcolors.bold("...",'\033[38;5;44m')+self.cmd[-l:e]
         else:
-            self.prop_dict["cmdc"] = self.cmd
+            self.prop_dict["cmdc"] = self.cmd[:e+1]
         self.prop_dict["cmd"] = self.cmd
         self.prop_dict["status"] = self.status
         self.prop_dict["status_id"] = Job.statstr_2_id[self.status]
