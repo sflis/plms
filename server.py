@@ -35,18 +35,24 @@ class PLMSServer(Daemon):
     PMLSconf = collections.namedtuple("PMLSconf","tcp_addr, tcp_port, logs_path, n_proc_limit, time_limit, load_state, socket_path")
     
     def __init__(self, 
-        scheduler_name         ,
-        conf_path              ,
-        conf = None
+        scheduler_name         ,#name of the scheduler
+        conf_path              ,#path to the configuration file 
+        conf = None             #configuration if no configuration file exists yet
         ):
+        
         import socket
+        #Getting  and setting host name and scheduler name 
         self.host = socket.gethostname()
         self.scheduler_name = scheduler_name
         self.configure_file = os.path.join(conf_path, scheduler_name+".conf")
         
+        #initializing log output buffer (a string)
         self.log_output = ""
         self.hold_output = True
         self.version = utils.VERSION
+        
+        #if no configuration is given and a configuration file is found
+        #the configuration is read from the conf file.
         if(os.path.isfile(self.configure_file) and conf == None):
             self.log("Found configure file, loading configuration")
             conf_file = open(self.configure_file,'r')
@@ -85,14 +91,17 @@ class PLMSServer(Daemon):
             f.write("n_proc_limit:                                                             %d\n"%conf.n_proc_limit)
             f.write("proc_time_limit:                                                          %d\n"%conf.time_limit)
             f.write("load_state:                                                               %s\n"%conf.load_state)
-
+        #Deamonizing the server   
         Daemon.__init__(self, '/tmp/mpls_'+scheduler_name+'.pid', 
             stdout=conf_path+"/"+scheduler_name+".log", 
             stderr=conf_path+"/"+scheduler_name+".log"
         )
         
-        self.client_socket_name = socket_path+"/pmls_client_"+scheduler_name
+        #self.client_socket_name = socket_path+"/pmls_client_"+scheduler_name
+        #path to an ipc socket for communications with the running jobs
         self.job_socket_name = socket_path+"/pmls_job_"+scheduler_name
+        #path to the file which saves the state of the scheduler server when it 
+        #shuts down.
         self.statistics_file = conf_path+"/pmls_stat_"+scheduler_name+".pkl"
         
         self.default_log_path = os.path.join(logs_path,scheduler_name+'/')
@@ -139,6 +148,9 @@ class PLMSServer(Daemon):
             self.all_jobs = state["all_jobs"]
 #___________________________________________________________________________________________________
     def init_sockets(self):
+        ''' Initializes and binds to sockets for client-server communication (tcp socket) and
+            job-server communication (ipc socket). 
+        '''
         self.log("Initilizing sockets")
         self.context = zmq.Context()
         self.client_socket = self.context.socket(zmq.REP)
@@ -150,6 +162,8 @@ class PLMSServer(Daemon):
 
 #___________________________________________________________________________________________________
     def command_SUBMIT_JOBS(self, msg):
+        ''' Processes and submits a list of jobs. 
+        '''
         n_jobs_added = self.parse_job_submit_list(msg)
         if(n_jobs_added>0):
             return_msg = "SUCCESS\n"
@@ -169,6 +183,9 @@ class PLMSServer(Daemon):
         return return_msg
 #___________________________________________________________________________________________________
     def command_CONFIGURE(self, msg):
+        ''' Processes configuration commands to the scheduler
+            server.
+        '''
         if(msg.opt[0] == "NPROC"):
             return_msg = "SUCCESS\n"
             if(msg.msg["n-proc"] != None):
@@ -179,6 +196,7 @@ class PLMSServer(Daemon):
         return return_msg
 #___________________________________________________________________________________________________
     def command_REMOVE_JOBS(self, msg):
+        
         if(msg.opt[0] == "ALL"):
             n = self.remove_jobs(None, msg.msg["job_ids"])
             return_msg = "SUCCESS\n"
@@ -196,7 +214,7 @@ class PLMSServer(Daemon):
         return f.read()
 #___________________________________________________________________________________________________
     def command_STOP(self, msg):
-        '''Processes the stop command message
+        ''' Processes the stop command message
         '''
         #Stopping the scheduler 'NOW' termiates any running jobs
         if(msg.opt[0] == "NOW"):

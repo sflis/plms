@@ -47,8 +47,8 @@ class Client(object):
                         'submit'      :(self.cmd_submit,'Simple job submit by passing a command line string'),
                         'submit-list' :(self.cmd_submit_list,''),
                         'avgload'     :(self.cmd_avg_load,'returns the average load on the host from the current scheduler'),
-                        'submit-jdf'  :(self.cmd_submit_jdf,''),
-                        
+                        'submit-jdf'  :(self.cmd_submit_jdf,'Submit a job with a jdl file (deprecated)'),
+                        'submit-jdl'  :(self.cmd_submit_jdf,'Submit a job with a jdl file'),
                         'n-proc'      :(self.cmd_cn_proc,'configures the maximum number of simultaneous jobs'),
                         'ping'        :(self.cmd_ping,''),
                         'log'         :(self.cmd_log,'fast access to log files via job id number'),
@@ -168,6 +168,13 @@ class Client(object):
             print(bcolors.FAIL+bcolors.BOLD+"Error: Must pass a command to submit"+bcolors.ENDC)
             return
         else:
+            if(parse_opt(opt,'h')):
+                print(bcolors.BOLD+"usage: submit [input] [options]"+bcolors.ENDC)
+                print(bcolors.BOLD+"    -e  "+bcolors.ENDC+"    if set the current enviroment is not passed to the job.")
+                print(bcolors.BOLD+"example:"+bcolors.ENDC)
+                print("'submit 'sleep 3' :submits a job which executes the shell command `sleep 3'")
+                return
+            
             if(parse_opt(opt,'e')):
                 env = None
             else:
@@ -194,6 +201,14 @@ class Client(object):
         print("Host: %s, Name: %s"%(host,name))
 #___________________________________________________________________________________________________
     def cmd_submit_jdf(self, arg, opt):
+        
+        if(parse_opt(opt,'h')):
+            print(bcolors.BOLD+"usage: submit-jdf [input] [options]"+bcolors.ENDC)
+            print(bcolors.BOLD+"    -f  "+bcolors.ENDC+"    input interpreted as a file containing paths to jdl files (not implemented yet)")
+            #print(bcolors.BOLD+"    -l   "+bcolors.ENDC+"   running jobs")
+            #print(bcolors.BOLD+"example:"+bcolors.ENDC)
+            #print("'q -rq' :shows the queued and running jobs")
+            return
         jdf_file = open(opt[0],'r')
         jdf = jdf_file.readlines()
         exe     = utils.parse(jdf, "Executable", separator='=')
