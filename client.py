@@ -142,6 +142,13 @@ class Client(object):
         print(print_queue(jobs,sel,format_str,message).decode('string_escape'))   
 #___________________________________________________________________________________________________
     def cmd_stop(self,arg, opt):
+        if(opt != None and parse_opt(opt,'h')):
+                print(bcolors.BOLD+"usage: stop [command]"+bcolors.ENDC)
+                print(bcolors.BOLD+"    now  "+bcolors.ENDC+"    Terminates running jobs and shuts down scheduler.")
+                print(bcolors.BOLD+"    gentle  "+bcolors.ENDC+" Shuts down scheduler the scheduler after the currently runnings jobs have finnished.")
+                #print(bcolors.BOLD+"example:"+bcolors.ENDC)
+                #print("'submit 'sleep 3' :submits a job which executes the shell command `sleep 3'")
+                return
         if(opt == None):
             print(self.scheduler_client.stop_scheduler("GENTLE"))
         elif(opt[0] == "now"):
@@ -159,6 +166,20 @@ class Client(object):
                 yn = raw_input("Pleas type 'yes' or 'no': ")
             if(yn == "yes"):
                 self.scheduler_client.remove_jobs(None)
+        elif(opt[0] == "idle" or opt[0] == 'running'):
+            jobs, message = self.scheduler_client.request_job()
+            ids = list()
+            
+            for i,job in jobs.items():
+                if(job.status == opt[0]):
+                    ids.append(job.id)
+                    
+            print("removed: "+self.scheduler_client.remove_jobs(ids)+"jobs.")
+            if(len(ids) <10):
+                s = "ids:"
+                for i in ids : 
+                    s += " %d"%i
+                print(s)
         else:
             ids = [int(i) for i in opt]
             print("removed: "+self.scheduler_client.remove_jobs(ids)+"jobs")
@@ -334,7 +355,8 @@ def print_queue(jobs, select = None, format_str = None, message = None):
                 else: 
                     job.update(now)
                     running_time_str = "--d  --:--:--.--h"
-                    idle_count += 1 
+                    if(job.status == "idle"):
+                        idle_count += 1 
                     
                 submited_time = time.strftime("%Y-%m-%d %H:%M:%S",job.submit_time) 
                 format_str = bc.bold("%(id)06d")+":"+colors[job.status]("%(status)10s")+": "+submited_time+" : "+bc.gen(running_time_str,bc.CYAN)+": %(cmdc)0.100s\n"
