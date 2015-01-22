@@ -244,7 +244,6 @@ class Client(object):
         
         out = utils.parse(jdf, "Out", separator='=')
         err = utils.parse(jdf, "Err", separator='=')
-        #print(args,exe)
         if(use_env == "true"):
             env = os.environ
         else:
