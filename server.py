@@ -219,7 +219,10 @@ class PLMSServer(Daemon):
         #Stopping the scheduler 'NOW' termiates any running jobs
         if(msg.opt[0] == "NOW"):
             return_msg = "SUCCESS\n"
-            n = self.remove_jobs(None, "unkown")
+            ids = list()
+            for j in self.jobs:
+                ids.append(j[1].id)
+            n = self.remove_jobs(ids, "unkown")
             return_msg = "removed "+str(n)+" jobs.\n"
             return_msg += "Stopping scheduler..."
             self.log("Stopping scheduler now!")      
@@ -347,7 +350,12 @@ class PLMSServer(Daemon):
         n_jobs_removed = 0
         if(ids == None):
             n_jobs_removed = len(self.queue)
+            for j in self.queue:
+                j.status = "removed"
+                j.end_time = time.time()
+                j.cpu_time = float("nan")
             self.queue = list()
+            
             for j in self.jobs:
                 j[0].terminate()
                 j[1].status = "terminated"

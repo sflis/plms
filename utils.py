@@ -36,7 +36,7 @@ def parse_opt(opt_list,opt):
     ret = False
     index = 0
     for o in opt_list:
-        if('-' in o):
+        if('-' in o[0]):
             if(opt in o):
                 return True
         index +=1
@@ -46,7 +46,7 @@ def parse_arg(opt_list,opt):
     ret = False
     index = 0
     for o in opt_list:
-        if('-' in o):
+        if('-' in o[0]):
             if(opt in o):
                 return True,index
         index +=1
@@ -60,6 +60,11 @@ def job_process(socket_name, job_description):
     It is also responsible to monitor the execution (NOTE:not completely implemented yet)
     and notify the scheduler once the job has finished execution. 
     '''
+    
+    
+    #import dl
+    #libc = dl.open('/lib/libc.so.6')
+    #libc.call('prctl', 15,job_description.cmd , 0, 0, 0)
     
     # redirect standard file descriptors to log files
     sys.stdout.flush()
