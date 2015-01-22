@@ -376,7 +376,10 @@ class PLMSServer(Daemon):
             if(j[1].id not in ids):
                 jobs.append(j)
             else:
+                #Sending SIGTERM signal to job
                 j[0].terminate()
+                #To avoid zombie processes we aslo join the job process
+                j[0].join()
                 j[1].status = "terminated"
                 j[1].end_time = time.time()
                 j[1].cpu_time = float("nan")
