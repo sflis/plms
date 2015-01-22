@@ -371,7 +371,7 @@ def print_queue(jobs, select = None, format_str = None, message = None):
             printed_queue += (bc.head("idle jobs: ")+bc.bold("%d")+bc.head(", running jobs: ")+bc.bold("%d")+bc.head(", total run time for selection: ")+bc.bold("%s")+r"\n")%(idle_count,running_count,running_time_str)
             printed_queue += ("Scheduler: "+bc.bold("%s")+",     Host: "+bc.bold("%s"))%(message.scheduler_name,message.host)
         else:
-            test = Job(-1,"",now,"")
+            test = Job(-1," ",now," ")
             test.update(now)
             try:
                 s = test.formated_output(format_str)

@@ -158,15 +158,18 @@ class Job(object):
             m = int((time-d*(24*3600)-h*3600)/60)
             s = (time-d*(24*3600)-h*3600-m*60)
             return (d,h,m,s)
-        if(self.cmd[-1] == '\n'):
-            e = -2
+        if(len(self.cmd)>0):
+            if(self.cmd[-1] == '\n'):
+                e = -2
+            else:
+                e = len(self.cmd)
+            if(len(self.cmd)>self.compress_cmd):
+                l = int(self.compress_cmd/2.0)
+                self.prop_dict["cmdc"] = self.cmd[:l-3]+bcolors.bold("...",'\033[38;5;44m')+self.cmd[-l:e]
+            else:
+                self.prop_dict["cmdc"] = self.cmd[:e+1]
         else:
-            e = len(self.cmd)
-        if(len(self.cmd)>self.compress_cmd):
-            l = int(self.compress_cmd/2.0)
-            self.prop_dict["cmdc"] = self.cmd[:l-3]+bcolors.bold("...",'\033[38;5;44m')+self.cmd[-l:e]
-        else:
-            self.prop_dict["cmdc"] = self.cmd[:e+1]
+            self.prop_dict["cmdc"] = self.cmd
         self.prop_dict["cmd"] = self.cmd
         self.prop_dict["status"] = self.status
         self.prop_dict["status_id"] = Job.statstr_2_id[self.status]
