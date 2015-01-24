@@ -20,13 +20,16 @@ class SchedulerClient(object):
         if(local):
             self.socket.connect("tcp://127.0.0.1:%s"%tcp_port)
         else:
-            try:
-                server_name = url.split("@")[0]+"@"+canIHasIP(url.split("@")[1],3)
-            except e:
-                raise(e)
-                return
+            #try:
+                #server_name = url.split("@")[0]+"@"+canIHasIP(url.split("@")[1],3)
+            #except e:
+                #raise(e)
+                #return
             #server_name = url.split("@")[0]+"@"+socket.gethostbyname(url.split("@")[1])
+            server_name = DNSResolve(url)
+            print(server_name)
             try:
+                #self.socket.connect("tcp://%s:%s"%(server_name,tcp_port))
                 self.tunnel = ssh.tunnel_connection(self.socket,"tcp://127.0.0.1:%s"%tcp_port, server_name, timeout=3)
             except e:
                 raise(e)
@@ -49,7 +52,15 @@ class SchedulerClient(object):
                 if socks:
                     
                     if socks.get(self.socket) == zmq.POLLIN:
-                        return_msg = self.socket.recv(zmq.NOBLOCK)
+                        constructed_message = False
+                        return_msg = ''
+                        while(not constructed_message):
+                            return_msg += self.socket.recv(zmq.NOBLOCK)
+                            try:
+                                pickle.loads(retmsg)
+                                constructed_message = True
+                            except:
+                                constructed_message = False
                         break
                 else:
                     print(bcolors.BOLD+bcolors.FAIL+"Timed out"+bcolors.ENDC)

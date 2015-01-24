@@ -52,6 +52,7 @@ class Client(object):
                         'n-proc'      :(self.cmd_cn_proc,'configures the maximum number of simultaneous jobs'),
                         'ping'        :(self.cmd_ping,''),
                         'log'         :(self.cmd_log,'fast access to log files via job id number'),
+                        'job'         :(self.cmd_job,'fast access to job descriptions via job id number')
                         }
       
 #___________________________________________________________________________________________________
@@ -166,23 +167,24 @@ class Client(object):
                 yn = raw_input("Pleas type 'yes' or 'no': ")
             if(yn == "yes"):
                 self.scheduler_client.remove_jobs(None)
-        elif(opt[0] == "idle" or opt[0] == 'running'):
-            jobs, message = self.scheduler_client.request_job()
-            ids = list()
-            
-            for i,job in jobs.items():
-                if(job.status == opt[0]):
-                    ids.append(job.id)
-                    
-            print("removed: "+self.scheduler_client.remove_jobs(ids)+"jobs.")
-            if(len(ids) <10):
-                s = "ids:"
-                for i in ids : 
-                    s += " %d"%i
-                print(s)
         else:
-            ids = [int(i) for i in opt]
-            print("removed: "+self.scheduler_client.remove_jobs(ids)+"jobs")
+            if(opt[0] == "idle" or opt[0] == 'running'):
+                jobs, message = self.scheduler_client.request_job()
+                ids = list()
+                
+                for i,job in jobs.items():
+                    if(job.status == opt[0]):
+                        ids.append(job.id)
+                        
+                print("removed: "+self.scheduler_client.remove_jobs(ids)+"jobs.")
+                if(len(ids) <10):
+                    s = "ids:"
+                    for i in ids : 
+                        s += " %d"%i
+                    print(s)
+            else:
+                ids = [int(i) for i in opt]
+                print("removed: "+self.scheduler_client.remove_jobs(ids)+"jobs")
 #___________________________________________________________________________________________________
     def cmd_submit(self,arg, opt):
         if(options == None):
@@ -311,6 +313,9 @@ class Client(object):
                 print("")
                 with open(v, 'r') as fin:
                     print fin.read()
+#___________________________________________________________________________________________________
+    def cmd_job(self, arg, opt):
+        pass
 #___________________________________________________________________________________________________        
     def print_help(self):
         usage = bcolors.BOLD+'usage: plms [command] [command arguments]'+bcolors.ENDC+'\n'
