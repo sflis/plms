@@ -57,9 +57,9 @@ class SchedulerClient(object):
                         while(not constructed_message):
                             return_msg += self.socket.recv(zmq.NOBLOCK)
                             try:
-                                pickle.loads(retmsg)
+                                pickle.loads(return_msg)
                                 constructed_message = True
-                            except:
+                            except Exception as e:
                                 constructed_message = False
                         break
                 else:
