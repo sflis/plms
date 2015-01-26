@@ -57,12 +57,12 @@ class PLMSServer(Daemon):
             self.log("Found configure file, loading configuration")
             conf_file = open(self.configure_file,'r')
             conf = conf_file.readlines()
-            socket_path = utils.parse(conf, "socket_path")
-            logs_path = utils.parse(conf, "logs_path")
-            self.n_proc_limit = int(utils.parse(conf, "n_proc_limit"))
+            socket_path =              utils.parse(conf, "socket_path")
+            logs_path =                utils.parse(conf, "logs_path")
+            self.n_proc_limit =    int(utils.parse(conf, "n_proc_limit"))
             self.proc_time_limit = int(utils.parse(conf, "proc_time_limit"))
-            self.tcp_addr = utils.parse(conf, "tcp_address")
-            self.tcp_port = utils.parse(conf, "tcp_port")
+            self.tcp_addr =            utils.parse(conf, "tcp_address")
+            self.tcp_port =            utils.parse(conf, "tcp_port")
             if(utils.parse(conf, "load_state") == "True" or utils.parse(conf, "load_state") == "true"):
                 init = True
             else:
@@ -91,11 +91,7 @@ class PLMSServer(Daemon):
             f.write("n_proc_limit:                                                             %d\n"%conf.n_proc_limit)
             f.write("proc_time_limit:                                                          %d\n"%conf.time_limit)
             f.write("load_state:                                                               %s\n"%conf.load_state)
-        #Deamonizing the server   
-        Daemon.__init__(self, '/tmp/mpls_'+scheduler_name+'.pid', 
-            stdout=conf_path+"/"+scheduler_name+".log", 
-            stderr=conf_path+"/"+scheduler_name+".log"
-        )
+
         
         #self.client_socket_name = socket_path+"/pmls_client_"+scheduler_name
         #path to an ipc socket for communications with the running jobs
@@ -106,6 +102,14 @@ class PLMSServer(Daemon):
         
         self.default_log_path = os.path.join(logs_path,scheduler_name+'/')
         utils.ensure_dir(self.default_log_path)
+        
+        
+        #Deamonizing the server   
+        Daemon.__init__(self, '/tmp/mpls_'+scheduler_name+'.pid', 
+            stdout=conf_path+"/"+scheduler_name+".log", 
+            stderr=conf_path+"/"+scheduler_name+".log"
+        )
+       
         
         self.queue = list()
         self.jobs = list()

@@ -56,17 +56,20 @@ class SchedulerClient(object):
                         return_msg = ''
                         while(not constructed_message):
                             return_msg += self.socket.recv(zmq.NOBLOCK)
+                            if('SUCCES' in return_msg or 'FAIL' in return_msg):
+                                break
                             try:
                                 pickle.loads(return_msg)
                                 constructed_message = True
                             except Exception as e:
+                                print(e)
                                 constructed_message = False
                         break
                 else:
                     print(bcolors.BOLD+bcolors.FAIL+"Timed out"+bcolors.ENDC)
                     break
-        except:
-            print(bcolors.BOLD+bcolors.FAIL+"Error while recieveing message"+bcolors.ENDC)
+        except Exception as e:
+            print(bcolors.BOLD+bcolors.FAIL+"Error while recieveing message: %s"%e+bcolors.ENDC)
             
         return return_msg
 #___________________________________________________________________________________________________    
