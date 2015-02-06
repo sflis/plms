@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-import server
-import utils
+from plms import server,utils
 
 from optparse import OptionParser
 from os.path import expandvars

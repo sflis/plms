@@ -3,7 +3,7 @@ from optparse import OptionParser
 from os.path import expandvars
 import os
 import sys
-import utils
+from plms import utils
 
 
 def create_dir(f):

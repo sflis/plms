@@ -17,8 +17,8 @@ from utils import bcolors as bc
 SchedulerInfo = collections.namedtuple("SchedulerInfo","name, tcp_addr, tcp_port, host")
 class Client(object):
     
-    def __init__(self):
-        path_here = os.path.dirname(os.path.realpath(__file__))
+    def __init__(self, path_here):
+        #path_here = os.path.dirname(os.path.realpath(__file__))
         self.client_name =  "client_"+socket.gethostname()
         self.scheduler_client = None     
         
@@ -54,7 +54,7 @@ class Client(object):
                         'log'         :(self.cmd_log,'fast access to log files via job id number'),
                         'job'         :(self.cmd_job,'fast access to job descriptions via job id number')
                         }
-      
+
 #___________________________________________________________________________________________________
     def load_state(self):
         '''Loads the previus state of the client
@@ -315,7 +315,18 @@ class Client(object):
                     print fin.read()
 #___________________________________________________________________________________________________
     def cmd_job(self, arg, opt):
-        pass
+        if(parse_opt(opt,'h')):
+            print(bcolors.BOLD+"usage: log [job id] [options]"+bcolors.ENDC)
+            print(bcolors.BOLD+"    -e  "+bcolors.ENDC+"    select error log")
+            print(bcolors.BOLD+"    -f   "+bcolors.ENDC+"   return only file name path")
+            print(bcolors.BOLD+"    -o    "+bcolors.ENDC+"  select out log")
+            print(bcolors.BOLD+"example:"+bcolors.ENDC)
+            print("'log 23 -eo' :shows the out log as well as the error log")
+            return
+        job, msg = self.scheduler_client.request_job(int(opt[0]))
+        
+        props = utils.get_object_prop(utils.Job())
+        props = props[prop_dict]
 #___________________________________________________________________________________________________        
     def print_help(self):
         usage = bcolors.BOLD+'usage: plms [command] [command arguments]'+bcolors.ENDC+'\n'
@@ -428,29 +439,29 @@ def main(command, options, client):
         if(not inpre):
             print(bcolors.WARNING+"Command '%s' not recognized"%command+bcolors.ENDC)
             print(client.print_help())
-    client.save_state()
+    
 
     
-if(__name__ == '__main__'):
+#if(__name__ == '__main__'):
        
-    #-----------------------------------------------------------------------
-    # Get the script's input parameters from the the command line.
-    client = Client()
-    usage =  client.print_help()
-    #parser = OptionParser()
-    #parser.set_usage(usage)
-    if(parse_opt(sys.argv[1:2],'h')):
-        print(usage)
-        sys.exit(0)
-    command = sys.argv[1]
-    if(len(sys.argv) >= 3):
-        options = list(sys.argv[2:])
-    else:
-        options = None
+    ##-----------------------------------------------------------------------
+    ## Get the script's input parameters from the the command line.
+    #client = Client()
+    #usage =  client.print_help()
+    ##parser = OptionParser()
+    ##parser.set_usage(usage)
+    #if(parse_opt(sys.argv[1:2],'h')):
+        #print(usage)
+        #sys.exit(0)
+    #command = sys.argv[1]
+    #if(len(sys.argv) >= 3):
+        #options = list(sys.argv[2:])
+    #else:
+        #options = None
         
-    #(optionss, args) = parser.parse_args() 
-    path_here = os.path.dirname(os.path.realpath(__file__))
-    main(command, options,client) 
+    ##(optionss, args) = parser.parse_args() 
+    #path_here = os.path.dirname(os.path.realpath(__file__))
+    #main(command, options,client) 
     
     
     

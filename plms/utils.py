@@ -237,6 +237,9 @@ class RetMessage(object):
         return self.composed
     def decompose(self, msg):
         self = pickle.loads(msg)
+#=====================================================================================================       
+def get_object_prop(obj):
+    return [a for a in dir(obj) if not a.startswith('__') and not callable(getattr(obj,a))]
 #=====================================================================================================        
 class bcolors:
     HEADER = '\033[35m\033[95m'

@@ -9,7 +9,7 @@ if(__name__ == '__main__'):
     
     scale = sys.argv[1]
     files = sys.argv[2:]
-    print(files)
+    print(files[0])
     print(glob.glob(files[0]))
     delay= float(scale)*np.random.uniform()
     time.sleep(int(delay))
