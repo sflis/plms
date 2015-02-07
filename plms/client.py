@@ -187,7 +187,7 @@ class Client(object):
                 print("removed: "+self.scheduler_client.remove_jobs(ids)+"jobs")
 #___________________________________________________________________________________________________
     def cmd_submit(self,arg, opt):
-        if(options == None):
+        if(opt == None):
             print(bcolors.FAIL+bcolors.BOLD+"Error: Must pass a command to submit"+bcolors.ENDC)
             return
         else:
