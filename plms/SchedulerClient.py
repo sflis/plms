@@ -6,8 +6,9 @@ import pickle
 import socket
 import time
 
-from utils import Message
-from utils import RetMessage, bcolors
+from message import Message,RetMessage
+
+from utils import bcolors
 #===================================================================================================
 #++++++Class: SchedulerClient+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================

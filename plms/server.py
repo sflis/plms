@@ -19,8 +19,9 @@ import pickle
 
 from daemon import Daemon
 import utils
-from utils import Message, RetMessage, parse, bcolors
+from utils import  parse, bcolors
 from job import Job, job_process
+from message import Message, RetMessage
 #===================================================================================================
 #++++++Class: Server++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
