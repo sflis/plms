@@ -10,8 +10,9 @@ import collections
 
 from SchedulerClient import SchedulerClient
 import utils
-from utils import parse_opt,parse_arg, bcolors, Job, colors
+from utils import parse_opt,parse_arg, bcolors, colors
 from utils import bcolors as bc
+from job import Job
 
 SchedulerInfo = collections.namedtuple("SchedulerInfo","name, tcp_addr, tcp_port, host")
 class Client(object):
