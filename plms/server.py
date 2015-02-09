@@ -1,26 +1,25 @@
 import os
 import sys
+import atexit
+
 from subprocess import call
 import subprocess
 from multiprocessing import Process
+
 import zmq
+
 import time
-import pickle
- 
-from daemon import Daemon
-import atexit
 from time import gmtime, strftime
 from datetime import datetime
+
 import inspect
 import math
 import collections
+import pickle
 
+from daemon import Daemon
 import utils
-from utils import job_process
-from utils import Job
-from utils import Message
-from utils import RetMessage
-from utils import parse,bcolors
+from utils import job_process, Job, Message, RetMessage, parse, bcolors
 
 #===================================================================================================
 #++++++Class: Server++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

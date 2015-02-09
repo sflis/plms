@@ -4,10 +4,6 @@ import pickle
 from time import gmtime, strftime
 from datetime import datetime
 import time
-import zmq
-from subprocess import call
-import subprocess
-from multiprocessing import Process
 
 
 VERSION = 0.2
@@ -60,8 +56,11 @@ def job_process(socket_name, job_description):
     It is also responsible to monitor the execution (NOTE:not completely implemented yet)
     and notify the scheduler once the job has finished execution. 
     '''
-    
-    
+    import zmq
+    from subprocess import call
+    import subprocess
+    from multiprocessing import Process
+
     #import dl
     #libc = dl.open('/lib/libc.so.6')
     #libc.call('prctl', 15,job_description.cmd , 0, 0, 0)

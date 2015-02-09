@@ -1,24 +1,22 @@
-#!/usr/bin/env python
-
- 
-from SchedulerClient import SchedulerClient
-
-from optparse import OptionParser
 from os.path import expandvars
 import os
 import sys
+
 import socket
-import utils
+
 import pickle
 import re
 import collections
-from utils import parse_opt,parse_arg,bcolors, Job,colors
+
+from SchedulerClient import SchedulerClient
+import utils
+from utils import parse_opt,parse_arg, bcolors, Job, colors
 from utils import bcolors as bc
+
 SchedulerInfo = collections.namedtuple("SchedulerInfo","name, tcp_addr, tcp_port, host")
 class Client(object):
     
     def __init__(self, path_here):
-        #path_here = os.path.dirname(os.path.realpath(__file__))
         self.client_name =  "client_"+socket.gethostname()
         self.scheduler_client = None     
         
@@ -439,29 +437,6 @@ def main(command, options, client):
         if(not inpre):
             print(bcolors.WARNING+"Command '%s' not recognized"%command+bcolors.ENDC)
             print(client.print_help())
-    
 
-    
-#if(__name__ == '__main__'):
-       
-    ##-----------------------------------------------------------------------
-    ## Get the script's input parameters from the the command line.
-    #client = Client()
-    #usage =  client.print_help()
-    ##parser = OptionParser()
-    ##parser.set_usage(usage)
-    #if(parse_opt(sys.argv[1:2],'h')):
-        #print(usage)
-        #sys.exit(0)
-    #command = sys.argv[1]
-    #if(len(sys.argv) >= 3):
-        #options = list(sys.argv[2:])
-    #else:
-        #options = None
-        
-    ##(optionss, args) = parser.parse_args() 
-    #path_here = os.path.dirname(os.path.realpath(__file__))
-    #main(command, options,client) 
-    
     
     
