@@ -86,9 +86,13 @@ class SchedulerClient(object):
         msg.msg["env"] = env
         msg.msg["wdir"] = wdir
         msg.msg["shell"] = shell
-
-        return self.send_msg(msg.compose())
         
+        ret_msg = RetMessage()
+        s = self.send_msg(msg.compose())
+        #print(s)
+        ret_msg.decompose(s)
+        #print(ret_msg.msg)
+        return ret_msg
 #___________________________________________________________________________________________________    
     def submit_job_description(self, exe, args , outlog  = None, errlog = None, user = "Unknown", env = None, shell = False):
         msg = Message( 'SUBMIT_JOBS', 'JOB_DESCRIPTION', user)
@@ -99,7 +103,10 @@ class SchedulerClient(object):
         msg.msg["outlog"] = outlog 
         msg.msg["errlog"] = errlog
                 
-        return self.send_msg(msg.compose())
+        ret_msg = RetMessage()
+        s = self.send_msg(msg.compose())
+        ret_msg.decompose(s)
+        return ret_msg
 #___________________________________________________________________________________________________    
     def classical_submit(self, executable, var, out, err, user, queue, init_dir):
         print("Not implemented yet")
@@ -140,9 +147,11 @@ class SchedulerClient(object):
         
         retmsg = self.send_msg(msg.compose())
         #print(retmsg)
-        retmsg = pickle.loads(retmsg)#RetMessage()
+        #retmsg = pickle.loads(retmsg)#RetMessage()
         #retmsg.decompose(self.send_msg(msg.compose()))
-        
+        retmsg = RetMessage()
+        s = self.send_msg(msg.compose())
+        retmsg.decompose(s)
         #print(retmsg.status)
         if('error' in retmsg.msg.keys()):
             print(bcolors.BOLD+bcolors.FAIL+retmsg.msg['error']+bcolors.ENDC)

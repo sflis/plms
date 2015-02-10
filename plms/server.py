@@ -168,23 +168,19 @@ class PLMSServer(Daemon):
     def command_SUBMIT_JOBS(self, msg):
         ''' Processes and submits a list of jobs. 
         '''
-        n_jobs_added = self.parse_job_submit_list(msg)
-        if(n_jobs_added>0):
-            return_msg = "SUCCESS\n"
-            self.log("Submited %d jobs"%n_jobs_added)
+        return_msg = RetMessage(server = self,status = "SUCCES")
+    
+        ids = self.parse_job_submit_list(msg)
+        if(len(ids)>0):
+            self.log("Submited %d jobs"%len(ids))
         else:
-            return_msg = "FAIL\n"
+            return_msg.status = "FAIL\n"
             self.log("Failed to submit jobs")
-        return_msg += str(n_jobs_added)
-        return return_msg
+        return_msg.msg['job_ids'] = ids
+        return return_msg.compose()
 #___________________________________________________________________________________________________
     def command_REQUEST_QUEUE(self, msg):
-        return_msg = "SUCCESS\n"
-        return_msg += "SENDING_LIST\n"
-        opt = msg.opt[0]
-        fmt_str = msg.opt[1] if(len(msg.opt)>1) else None
-        return_msg += self.print_queue(msg.opt[0], fmt_str)
-        return return_msg
+        pass
 #___________________________________________________________________________________________________
     def command_CONFIGURE(self, msg):
         ''' Processes configuration commands to the scheduler
@@ -288,39 +284,34 @@ class PLMSServer(Daemon):
     def parse_job_submit_list(self, msg):
         
         self.log("Parsing job submit list")
-        
+        ids = list()
         if(msg.opt[0] == 'SIMPLE'):
             for j in msg.msg["cmd_list"]:
-                self.add_job(j, msg.user, 
+               ids.append(self.add_job(j, msg.user, 
                              self.default_log_path + str(self.id_count)+".out", 
                              self.default_log_path + str(self.id_count)+".err", 
                              env = msg.msg["env"], 
                              current_dir = msg.msg["wdir"],
-                             shell = msg.msg["shell"])
-            return len(msg.msg["cmd_list"])
+                             shell = msg.msg["shell"]))
+            
         elif(msg.opt[0] == 'SIMPLE_LOG'):
             log_out_path = msg.msg["log_out_path"] 
             log_err_path = msg.msg["log_err_path"]      
             for j in msg_dict["cmd_list"]:
-                self.add_job(j, msg.user, 
+                ids.append(self.add_job(j, msg.user, 
                              log_out_path + str(self.id_count)+".out", 
                              log_err_path + str(self.id_count)+".err",
                              env = msg.msg["env"], 
                              current_dir = msg.msg["current_dir"],
-                             shell = msg.msg["shell"])
-            return len(msg.msg["cmd_list"])
+                             shell = msg.msg["shell"]))
         elif(msg.opt[0] == 'JOB_DESCRIPTION'):
             log_out = msg.msg["outlog"] 
             log_err = msg.msg["errlog"]
             cmd = msg.msg["executable"]
             cmd += " "+msg.msg["args"]
-            #for arg in msg.msg["args"]:
-                #cmd +=" "+arg
-            self.add_job(cmd, msg.user, log_out, log_err, env = msg.msg["env"], shell = msg.msg["shell"])
-            return 1
-        else:
-            return -1
+            ids.append(self.add_job(cmd, msg.user, log_out, log_err, env = msg.msg["env"], shell = msg.msg["shell"]))
 
+        return ids
 #___________________________________________________________________________________________________
     def log(self, msg):
         '''This function provides basic log functionallity for the server'''
@@ -347,7 +338,7 @@ class PLMSServer(Daemon):
         self.queue.append(job)
         self.all_jobs[self.id_count] = job        
         self.id_count +=1
-        
+        return self.id_count-1 
 #___________________________________________________________________________________________________    
     def remove_jobs(self, ids, user):
         

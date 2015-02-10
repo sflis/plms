@@ -201,21 +201,33 @@ class Client(object):
                 env = None
             else:
                 env = os.environ
-                #" ".join(opt[0])
             return_msg = self.scheduler_client.submit_simple_jobs([opt[0]], env = env, wdir = os.getcwd(), user = os.environ['USER'])
         
-        if(return_msg.find("FAIL")>=0):
+        
+        if(return_msg.status == "FAIL"):
             print(bcolors.BOLD+bcolors.FAIL+"Submition failed"+bcolors.ENDC)
         else:
-            print(bcolors.OKBLUE+"Succesfully submited job"+bcolors.ENDC) 
+            if(len(return_msg.msg['job_ids']) == 1):
+                print(bcolors.OKBLUE+"Succesfully submited job: "+bcolors.ENDC+bc.bold("%d "%return_msg.msg['job_ids'][0]))
+            else:
+                s = bcolors.OKBLUE+"Succesfully submited jobs: "+bcolors.ENDC
+                for i in return_msg.msg['job_ids']:
+                    s += bc.bold("%d "%i)
+                print(s)
 #___________________________________________________________________________________________________
     def cmd_submit_list(self,arg, opt):
         if(opt == None):
             print(bcolors.FAIL+bcolors.BOLD+"Error: no file provided"+bcolors.ENDC)
         else:
             joblist = open(opt[0],'r').readlines()
-            self.scheduler_client.submit_simple_jobs(joblist, env = os.environ)	
-            
+            return_msg = self.scheduler_client.submit_simple_jobs(joblist, env = os.environ)	
+            if(len(return_msg.msg['job_ids']) == 1):
+                print(bcolors.OKBLUE+"Succesfully submited job: "+bcolors.ENDC+bc.bold("%d "%return_msg.msg['job_ids'][0]))
+            else:
+                s = bcolors.OKBLUE+"Succesfully submited jobs: "+bcolors.ENDC
+                for i in return_msg.msg['job_ids']:
+                    s += bc.bold("%d "%i)
+                print(s)
 #___________________________________________________________________________________________________
     def cmd_ping(self,arg, opt):
         (name,host,dt) = self.scheduler_client.ping()

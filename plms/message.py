@@ -51,7 +51,13 @@ class RetMessage(object):
         self.status = status
         self.composed = None
     def compose(self):
-        self.composed  = pickle.dumps(self)
+        self.msg['host'] = self.host
+        self.msg['status'] = self.status
+        self.msg['scheduler_name'] = self.scheduler_name
+        self.composed  = pickle.dumps(self.msg)
         return self.composed
     def decompose(self, msg):
-        self = pickle.loads(msg)
+        self.msg = pickle.loads(msg)
+        self.host = self.msg['host']
+        self.status = self.msg['status']
+        self.scheduler_name = self.msg['scheduler_name']
