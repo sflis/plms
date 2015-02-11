@@ -58,6 +58,7 @@ class SchedulerClient(object):
                         break
                 else:
                     print(bcolors.BOLD+bcolors.FAIL+"Timed out"+bcolors.ENDC)
+                    return_msg = RetMessage(server = self,status = "FAIL")
                     break
         except Exception as e:
             print(bcolors.BOLD+bcolors.FAIL+"Error while recieveing message: %s"%e+bcolors.ENDC)
@@ -66,9 +67,9 @@ class SchedulerClient(object):
 #___________________________________________________________________________________________________    
     def submit_simple_jobs(self, cmd_list, outlog_path  = None, errlog_path = None, user = "Unknown", env = None, wdir = None, shell = True):
         if(outlog_path == None or errlog_path == None):
-            msg = Message('SUBMIT_JOBS', 'SIMPLE', user)
+            msg = Message('SUBMIT_JOBS', ['SIMPLE'], user)
         else:
-            msg = Message( 'SUBMIT_JOBS', 'SIMPLE_LOG', user)
+            msg = Message( 'SUBMIT_JOBS', ['SIMPLE_LOG'], user)
             msg.msg["outlog_path"] = outlog_path 
             msg.msg["errlog_path"] = errlog_path
 
@@ -77,15 +78,11 @@ class SchedulerClient(object):
         msg.msg["wdir"] = wdir
         msg.msg["shell"] = shell
         
-        #ret_msg = RetMessage()
-        ret_msg = self.send_msg(msg.compose())
-        #print(s)
-        #ret_msg.decompose(s)
-        #print(ret_msg.msg)
+        ret_msg = self.send_msg(msg)
         return ret_msg
 #___________________________________________________________________________________________________    
     def submit_job_description(self, exe, args , outlog  = None, errlog = None, user = "Unknown", env = None, shell = False):
-        msg = Message( 'SUBMIT_JOBS', 'JOB_DESCRIPTION', user)
+        msg = Message( 'SUBMIT_JOBS', ['JOB_DESCRIPTION'], user)
         msg.msg["executable"] = exe
         msg.msg["args"] = args
         msg.msg["env"] = env
@@ -93,33 +90,30 @@ class SchedulerClient(object):
         msg.msg["outlog"] = outlog 
         msg.msg["errlog"] = errlog
                 
-        #ret_msg = RetMessage()
-        #s = self.send_msg(msg.compose())
-        #ret_msg.decompose(s)
-        ret_msg = self.send_msg(msg.compose())
+        ret_msg = self.send_msg(msg)
         return ret_msg
 #___________________________________________________________________________________________________    
     def classical_submit(self, executable, var, out, err, user, queue, init_dir):
         print("Not implemented yet")
 #___________________________________________________________________________________________________
     def stop_scheduler(self, opt = "NOW", user = ""):
-        msg = Message('STOP', opt, user)
-        return self.send_msg(msg.compose())
+        msg = Message('STOP', [opt], user)
+        return self.send_msg(msg)
 #___________________________________________________________________________________________________
     def change_nproc_limit(self, nproc, user = ""):
-        msg = Message('CONFIGURE', 'NPROC', user)
+        msg = Message('CONFIGURE', ['NPROC'], user)
         msg.msg["n-proc"] = nproc
-        return self.send_msg(msg.compose())
+        return self.send_msg(msg)
         
 #___________________________________________________________________________________________________
     def get_avg_load(self, user = ""):
         msg = Message('AVG_LOAD', '', user)
-        return self.send_msg(msg.compose())    
+        return self.send_msg(msg)    
 #___________________________________________________________________________________________________
     def ping(self, user = ""):
         msg = Message('PING', '', user)
         start_time = time.time()
-        rec = self.send_msg(msg.compose()).split()
+        rec = self.send_msg(msg).split()
         finish_time = time.time()
         return (rec[1],rec[2],finish_time-start_time)
 #___________________________________________________________________________________________________    
@@ -131,16 +125,12 @@ class SchedulerClient(object):
             opt = 'LIST'
         msg = Message('REMOVE_JOBS', opt, user)
         msg.msg["job_ids"] = ids
-        return self.send_msg(msg.compose())
+        return self.send_msg(msg)
 #___________________________________________________________________________________________________    
     def request_job(self, id = None, user = "Unknown"):
         msg = Message('REQUEST_JOBS', id, user)
         
-        retmsg = self.send_msg(msg)#.compose())
-        #retmsg = RetMessage()
-        #s = self.send_msg(msg.compose())
-        #retmsg.decompose(s)
-        #print(retmsg.status)
+        retmsg = self.send_msg(msg)
         if('error' in retmsg.msg.keys()):
             print(bcolors.BOLD+bcolors.FAIL+retmsg.msg['error']+bcolors.ENDC)
             sys.exit(0)

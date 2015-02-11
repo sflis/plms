@@ -150,13 +150,28 @@ class Client(object):
                 #print("'submit 'sleep 3' :submits a job which executes the shell command `sleep 3'")
                 return
         if(opt == None):
-            print(self.scheduler_client.stop_scheduler("GENTLE"))
+            msg = self.scheduler_client.stop_scheduler("GENTLE")
+            if(msg.status == "SUCCES"):
+                print(msg.msg['msg'])
+                print("Waiting for %d jobs to finish..."%len(msg.msg['job_ids']))
+            else:
+                print(msg.error)
         elif(opt[0] == "now"):
-            print(self.scheduler_client.stop_scheduler("NOW"))
+            msg = self.scheduler_client.stop_scheduler("NOW")
+            if(msg.status == "SUCCES"):
+                print(msg.msg['msg'])
+                print("Terminated %d jobs..."%len(msg.msg['job_ids']))
+            else:
+                print(msg.error)
         elif(opt[0] == "gentle"):
-            print(self.scheduler_client.stop_scheduler("GENTLE"))
+            msg = self.scheduler_client.stop_scheduler("GENTLE")
+            if(msg.status == "SUCCES"):
+                print(msg.msg['msg'])
+                print("Waiting for %d jobs to finish..."%len(msg.msg['job_ids']))
+            else:
+                print(msg.error)
         else:
-            print(bcolors.BOLD+bcolors.FAIL+"Error: no valid stop mode given"+bcolors.ENDC) 
+            print(bcolors.BOLD+bcolors.FAIL+"Error: Given stop mode not valid"+bcolors.ENDC) 
 #___________________________________________________________________________________________________
     def cmd_rm(self, arg, opt):
         if(opt == None):

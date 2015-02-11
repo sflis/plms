@@ -216,25 +216,27 @@ class PLMSServer(Daemon):
     def command_STOP(self, msg):
         ''' Processes the stop command message
         '''
+        return_msg = RetMessage(server = self,status = "SUCCES")
+        ids = list()
+        #Getting job ids of the running jobs
+        for j in self.jobs:
+                ids.append(j[1].id)
         #Stopping the scheduler 'NOW' termiates any running jobs
         if(msg.opt[0] == "NOW"):
-            return_msg = "SUCCESS\n"
-            ids = list()
-            for j in self.jobs:
-                ids.append(j[1].id)
             n = self.remove_jobs(ids, "unkown")
-            return_msg = "removed "+str(n)+" jobs.\n"
-            return_msg += "Stopping scheduler..."
+            return_msg.msg['msg'] = "Stopping scheduler..."
+            return_msg.msg['job_ids'] = ids
             self.log("Stopping scheduler now!")      
             self.quit = True
         #Stopping the scheduler 'GENTLE' exits the scheduler when the last running job stops.
         elif(msg.opt[0] == "GENTLE"):
-            return_msg = "SUCCESS\n"
-            return_msg += "Stopping scheduler..."
+            return_msg.msg['msg'] = "Stopping scheduler gently..."
+            return_msg.msg['job_ids'] = ids
             self.quit = True
             self.log("Stopping scheduler gently.")
         else:
-            return_msg = "FAIL\n"
+            return_msg.status = "FAIL"
+            return_msg.error = "Unknown command"
         return return_msg
     
 #___________________________________________________________________________________________________
@@ -269,9 +271,6 @@ class PLMSServer(Daemon):
         except:
             return
         
-        
-        #msg = Message()
-        #msg.decompose(message)
         self.log("Recieved command from client: %s"%msg.cmd)
         if(msg.cmd in self.commands.keys()):
             return_msg = self.commands[msg.cmd](msg)
@@ -343,6 +342,11 @@ class PLMSServer(Daemon):
     def remove_jobs(self, ids, user):
         
         n_jobs_removed = 0
+        
+        terminated = list()
+        removed = list()
+        not_removed = list()
+        
         if(ids == None):
             n_jobs_removed = len(self.queue)
             for j in self.queue:
