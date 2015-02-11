@@ -42,10 +42,9 @@ class SchedulerClient(object):
 #___________________________________________________________________________________________________    
     def send_msg(self, msg):
         try:
-            self.socket.send(msg, zmq.NOBLOCK)
+            self.socket.send_pyobj(msg, zmq.NOBLOCK)
         except:
             print(bcolors.BOLD+bcolors.FAIL+"Failed to send message"+bcolors.ENDC)
-        return_msg = ""
 
         try:
             while(True):
@@ -54,17 +53,8 @@ class SchedulerClient(object):
                     
                     if socks.get(self.socket) == zmq.POLLIN:
                         constructed_message = False
-                        return_msg = ''
-                        while(not constructed_message):
-                            return_msg += self.socket.recv(zmq.NOBLOCK)
-                            if('SUCCES' in return_msg or 'FAIL' in return_msg):
-                                break
-                            try:
-                                pickle.loads(return_msg)
-                                constructed_message = True
-                            except Exception as e:
-                                print(e)
-                                constructed_message = False
+                        return_msg = self.socket.recv_pyobj(zmq.NOBLOCK)
+
                         break
                 else:
                     print(bcolors.BOLD+bcolors.FAIL+"Timed out"+bcolors.ENDC)
@@ -87,10 +77,10 @@ class SchedulerClient(object):
         msg.msg["wdir"] = wdir
         msg.msg["shell"] = shell
         
-        ret_msg = RetMessage()
-        s = self.send_msg(msg.compose())
+        #ret_msg = RetMessage()
+        ret_msg = self.send_msg(msg.compose())
         #print(s)
-        ret_msg.decompose(s)
+        #ret_msg.decompose(s)
         #print(ret_msg.msg)
         return ret_msg
 #___________________________________________________________________________________________________    
@@ -103,9 +93,10 @@ class SchedulerClient(object):
         msg.msg["outlog"] = outlog 
         msg.msg["errlog"] = errlog
                 
-        ret_msg = RetMessage()
-        s = self.send_msg(msg.compose())
-        ret_msg.decompose(s)
+        #ret_msg = RetMessage()
+        #s = self.send_msg(msg.compose())
+        #ret_msg.decompose(s)
+        ret_msg = self.send_msg(msg.compose())
         return ret_msg
 #___________________________________________________________________________________________________    
     def classical_submit(self, executable, var, out, err, user, queue, init_dir):
@@ -145,13 +136,10 @@ class SchedulerClient(object):
     def request_job(self, id = None, user = "Unknown"):
         msg = Message('REQUEST_JOBS', id, user)
         
-        retmsg = self.send_msg(msg.compose())
-        #print(retmsg)
-        #retmsg = pickle.loads(retmsg)#RetMessage()
-        #retmsg.decompose(self.send_msg(msg.compose()))
-        retmsg = RetMessage()
-        s = self.send_msg(msg.compose())
-        retmsg.decompose(s)
+        retmsg = self.send_msg(msg)#.compose())
+        #retmsg = RetMessage()
+        #s = self.send_msg(msg.compose())
+        #retmsg.decompose(s)
         #print(retmsg.status)
         if('error' in retmsg.msg.keys()):
             print(bcolors.BOLD+bcolors.FAIL+retmsg.msg['error']+bcolors.ENDC)

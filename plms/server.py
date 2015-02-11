@@ -177,7 +177,7 @@ class PLMSServer(Daemon):
             return_msg.status = "FAIL\n"
             self.log("Failed to submit jobs")
         return_msg.msg['job_ids'] = ids
-        return return_msg.compose()
+        return return_msg
 #___________________________________________________________________________________________________
     def command_REQUEST_QUEUE(self, msg):
         pass
@@ -256,7 +256,7 @@ class PLMSServer(Daemon):
         else:
             return_msg.status = "FAIL"
             return_msg.msg["error"] = "Job id %d not found"%msg.opt[0]
-        return return_msg.compose()
+        return return_msg
 #___________________________________________________________________________________________________
     def recv_commands(self):
         '''
@@ -265,20 +265,20 @@ class PLMSServer(Daemon):
         
         # If no message waits recv will throw an exception
         try:
-            message = self.client_socket.recv(flags=zmq.DONTWAIT)
+            msg = self.client_socket.recv_pyobj(flags=zmq.DONTWAIT)
         except:
             return
         
         
-        msg = Message()
-        msg.decompose(message)
+        #msg = Message()
+        #msg.decompose(message)
         self.log("Recieved command from client: %s"%msg.cmd)
         if(msg.cmd in self.commands.keys()):
             return_msg = self.commands[msg.cmd](msg)
         else:
             return_msg = "FAIL\n"
         self.log("Returning message to client")    
-        self.client_socket.send(return_msg)
+        self.client_socket.send_pyobj(return_msg)
         
 #___________________________________________________________________________________________________
     def parse_job_submit_list(self, msg):
