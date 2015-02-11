@@ -186,13 +186,14 @@ class PLMSServer(Daemon):
         ''' Processes configuration commands to the scheduler
             server.
         '''
+        return_msg = RetMessage(server = self,status = "SUCCES")
         if(msg.opt[0] == "NPROC"):
-            return_msg = "SUCCESS\n"
             if(msg.msg["n-proc"] != None):
                 self.n_proc_limit = int(msg.msg["n-proc"])
-            return_msg +="nproc-limit: %d\n"%self.n_proc_limit 
+            return_msg.msg['n-proc'] = self.n_proc_limit 
         else:
-            return_msg = "FAIL\n"
+            self.log("Failed to configure: unrecongnized option %s"%msg.opt[0])
+            return_msg.status = "FAIL\n"
         return return_msg
 #___________________________________________________________________________________________________
     def command_REMOVE_JOBS(self, msg):

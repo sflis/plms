@@ -95,7 +95,8 @@ class Client(object):
             limit = None
         else:
             limit = int(opt[0])
-        print(self.scheduler_client.change_nproc_limit(limit))
+        msg = (self.scheduler_client.change_nproc_limit(limit))
+        print("scheduler nproc-limit: "+bc.bold("%d"%msg.msg['n-proc']))
 #___________________________________________________________________________________________________
     def cmd_avg_load(self,arg,opt):
         print(self.scheduler_client.get_avg_load())
@@ -246,7 +247,7 @@ class Client(object):
 #___________________________________________________________________________________________________
     def cmd_ping(self,arg, opt):
         (name,host,dt) = self.scheduler_client.ping()
-        print("Ping: %s,  %fms"%(self.current_scheduler.tcp_addr,dt*1e3))
+        print("Ping: %s,  %f ms"%(self.current_scheduler.tcp_addr,dt*1e3))
         print("Host: %s, Name: %s"%(host,name))
 #___________________________________________________________________________________________________
     def cmd_submit_jdf(self, arg, opt):
