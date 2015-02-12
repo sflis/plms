@@ -41,8 +41,9 @@ class Job(object):
             else:
                 e = len(self.cmd)
             if(len(self.cmd)>self.compress_cmd):
+                from utils import bcolors as bc
                 l = int(self.compress_cmd/2.0)
-                self.prop_dict["cmdc"] = self.cmd[:l-3]+bcolors.bold("...",'\033[38;5;44m')+self.cmd[-l:e]
+                self.prop_dict["cmdc"] = self.cmd[:l-3]+bc.bold("...",'\033[38;5;44m')+self.cmd[-l:e]
             else:
                 self.prop_dict["cmdc"] = self.cmd[:e+1]
         else:

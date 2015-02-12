@@ -41,6 +41,7 @@ class SchedulerClient(object):
         self.poller.register(self.socket, zmq.POLLIN)
 #___________________________________________________________________________________________________    
     def send_msg(self, msg):
+        return_msg = RetMessage(status = "FAIL")
         try:
             self.socket.send_pyobj(msg, zmq.NOBLOCK)
         except:
@@ -50,15 +51,12 @@ class SchedulerClient(object):
             while(True):
                 socks = dict(self.poller.poll(1000))
                 if socks:
-                    
                     if socks.get(self.socket) == zmq.POLLIN:
                         constructed_message = False
                         return_msg = self.socket.recv_pyobj(zmq.NOBLOCK)
-
                         break
                 else:
                     print(bcolors.BOLD+bcolors.FAIL+"Timed out"+bcolors.ENDC)
-                    return_msg = RetMessage(server = self,status = "FAIL")
                     break
         except Exception as e:
             print(bcolors.BOLD+bcolors.FAIL+"Error while recieveing message: %s"%e+bcolors.ENDC)

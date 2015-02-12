@@ -48,6 +48,10 @@ class RetMessage(object):
         if(server != None):
             self.scheduler_name = server.scheduler_name
             self.host = server.host
+        else:
+            self.scheduler_name =''
+            self.host = ''
+            
         self.status = status
         self.composed = None
     def compose(self):
