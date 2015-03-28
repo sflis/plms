@@ -126,7 +126,7 @@ class SchedulerClient(object):
         return self.send_msg(msg)
 #___________________________________________________________________________________________________    
     def request_job(self, id = None, user = "Unknown"):
-        msg = Message('REQUEST_JOBS', id, user)
+        msg = Message('REQUEST_JOBS', [id], user)        
         
         retmsg = self.send_msg(msg)
         if('error' in retmsg.msg.keys()):
