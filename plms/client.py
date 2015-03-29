@@ -40,18 +40,18 @@ class Client(object):
                          }
         
         
-        self.commands = {'q'          :(self.cmd_print_queue,'returns queue'),
-                        'stop'        :(self.cmd_stop,'stop scheduler'),
-                        'rm'          :(self.cmd_rm,'remove jobs by job id'),
+        self.commands = {'q'          :(self.cmd_print_queue,'Prints the queue'),
+                        'stop'        :(self.cmd_stop,'Stop scheduler'),
+                        'rm'          :(self.cmd_rm,'Remove jobs by job id'),
                         'submit'      :(self.cmd_submit,'Simple job submit by passing a command line string'),
                         'submit-list' :(self.cmd_submit_list,'Submit a file with a list of commands'),
-                        'avgload'     :(self.cmd_avg_load,'returns the average load on the host from the current scheduler'),
+                        'avgload'     :(self.cmd_avg_load,'Returns the average load on the host from the current scheduler'),
                         'submit-jdf'  :(self.cmd_submit_jdf,'Submit a job with a jdl file '+bc.warn('(deprecated)')),
                         'submit-jdl'  :(self.cmd_submit_jdf,'Submit a job with a jdl file'),
                         'n-proc'      :(self.cmd_cn_proc,'configures the maximum number of simultaneous jobs'),
                         'ping'        :(self.cmd_ping,'Pings the scheduler and returns the response time'),
-                        'log'         :(self.cmd_log,'fast access to log files via job id number'),
-                        'job'         :(self.cmd_job,'fast access to job descriptions via job id number'+bc.warn(' (not fully implemented yet)'))
+                        'log'         :(self.cmd_log,'Fast access to log files via job id number'),
+                        'job'         :(self.cmd_job,'Fast access to job descriptions via job id number'+bc.warn(' (not fully implemented yet)'))
                         }
 
 #___________________________________________________________________________________________________
