@@ -338,6 +338,13 @@ class Client(object):
             print(bcolors.BOLD+k+": "+v+bcolors.ENDC)
             if(not parse_opt(opt,'f')):
                 print("")
+                if(os.stat(v).st_size>1e6):
+                    print(bc.warn("Log file larger than 1 MB"))
+                    a = raw_input("Do you want to print[y][N]?")
+                    if(a == 'y' or a == 'yes'):
+                        pass
+                    else:
+                        continue
                 with open(v, 'r') as fin:
                     print fin.read()
 #___________________________________________________________________________________________________
