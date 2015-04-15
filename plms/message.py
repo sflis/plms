@@ -11,8 +11,10 @@ class Message(object):
         self.msg['command'] = command
         if(isinstance(options,list) or options == None): 
             self.msg['options'] = options
+            self.opt = options
         else:
             self.msg['options'] = [options]
+            self.opt = options = [options]
         self.msg['user'] = user
         self.cmd = command
         self.opt = options

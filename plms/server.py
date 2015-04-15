@@ -49,7 +49,9 @@ class PLMSServer(Daemon):
         #initializing log output buffer (a string)
         self.log_output = ""
         self.hold_output = True
-        self.version = utils.VERSION
+        self.version_major = utils.VERSION_MAJOR
+        self.version_minor = utils.VERSION_MINOR
+        self.version_patch = utils.VERSION_PATCH
         
         #if no configuration is given and a configuration file is found
         #the configuration is read from the conf file.
@@ -168,7 +170,7 @@ class PLMSServer(Daemon):
     def command_SUBMIT_JOBS(self, msg):
         ''' Processes and submits a list of jobs. 
         '''
-        return_msg = RetMessage(server = self,status = "SUCCES")
+        return_msg = RetMessage(server = self, status = "SUCCES")
     
         ids = self.parse_job_submit_list(msg)
         if(len(ids)>0):

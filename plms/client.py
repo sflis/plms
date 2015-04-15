@@ -32,26 +32,26 @@ class Client(object):
         self.load_state()
  
         self.load_state()
-        self.pre_cmd =  {'cs'          :(self.pre_cmd_change_sch,'change scheduler'),
-                         'as'          :(self.pre_cmd_get_available_sch,'list available schedulers'),
-                         'add-remote'  :(self.cmd_add_remote,'add remote scheduler'),
-                         'which'       :(self.cmd_which,'which scheduler is used'),
-                         'avgloadl'    :(self.cmd_avgloadl,'list the average load on the hosts of the available schedulers' +bc.warn(' (not fully implemented yet)')),
+        self.pre_cmd =  {'cs'          :(self.pre_cmd_change_sch,        'change scheduler'),
+                         'as'          :(self.pre_cmd_get_available_sch, 'list available schedulers'),
+                         'add-remote'  :(self.cmd_add_remote,            'add remote scheduler'),
+                         'which'       :(self.cmd_which,                 'which scheduler is used'),
+                         'avgloadl'    :(self.cmd_avgloadl,              'list the average load on the hosts of the available schedulers' +bc.warn(' (not fully implemented yet)')),
                          }
         
         
-        self.commands = {'q'          :(self.cmd_print_queue,'Prints the queue'),
-                        'stop'        :(self.cmd_stop,'Stop scheduler'),
-                        'rm'          :(self.cmd_rm,'Remove jobs by job id'),
-                        'submit'      :(self.cmd_submit,'Simple job submit by passing a command line string'),
-                        'submit-list' :(self.cmd_submit_list,'Submit a file with a list of commands'),
-                        'avgload'     :(self.cmd_avg_load,'Returns the average load on the host from the current scheduler'),
-                        'submit-jdf'  :(self.cmd_submit_jdf,'Submit a job with a jdl file '+bc.warn('(deprecated)')),
-                        'submit-jdl'  :(self.cmd_submit_jdf,'Submit a job with a jdl file'),
-                        'n-proc'      :(self.cmd_cn_proc,'configures the maximum number of simultaneous jobs'),
-                        'ping'        :(self.cmd_ping,'Pings the scheduler and returns the response time'),
-                        'log'         :(self.cmd_log,'Fast access to log files via job id number'),
-                        'job'         :(self.cmd_job,'Fast access to job descriptions via job id number'+bc.warn(' (not fully implemented yet)'))
+        self.commands = {'q'          :(self.cmd_print_queue, 'Prints the queue'),
+                        'stop'        :(self.cmd_stop,        'Stop scheduler'),
+                        'rm'          :(self.cmd_rm,          'Remove jobs by job id'),
+                        'submit'      :(self.cmd_submit,      'Simple job submit by passing a command line string'),
+                        'submit-list' :(self.cmd_submit_list, 'Submit a file with a list of commands'),
+                        'avgload'     :(self.cmd_avg_load,    'Returns the average load on the host from the current scheduler'),
+                        'submit-jdf'  :(self.cmd_submit_jdf,  'Submit a job with a jdl file '+bc.warn('(deprecated)')),
+                        'submit-jdl'  :(self.cmd_submit_jdf,  'Submit a job with a jdl file'),
+                        'n-proc'      :(self.cmd_cn_proc,     'Configures the maximum number of simultaneous jobs'),
+                        'ping'        :(self.cmd_ping,        'Pings the scheduler and returns the response time'),
+                        'log'         :(self.cmd_log,         'Fast access to log files via job id number'),
+                        'job'         :(self.cmd_job,         'Fast access to job descriptions via job id number'+bc.warn(' (not fully implemented yet)'))
                         }
 
 #___________________________________________________________________________________________________
@@ -348,7 +348,7 @@ class Client(object):
             print(bcolors.BOLD+"    -f   "+bcolors.ENDC+"   return only file name path")
             print(bcolors.BOLD+"    -o    "+bcolors.ENDC+"  select out log")
             print(bcolors.BOLD+"example:"+bcolors.ENDC)
-            print("'log 23 -eo' :shows the out log as well as the error log")
+            print("'log 23 -eo' :shows the out log as well as the error log of the job with id 23")
             return
         job, msg = self.scheduler_client.request_job(int(opt[0]))
         

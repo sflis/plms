@@ -6,11 +6,13 @@ from datetime import datetime
 import time
 
 
-VERSION = 0.2
+VERSION_MAJOR = 0
+VERSION_MINOR = 1
+VERSION_PATCH = 6
+
 #function to create directory that check if the directory alread have been created.
 def ensure_dir(f):
     d = os.path.dirname(f)
-    #print(d)
     if not os.path.exists(d):
         os.makedirs(d)
 #===================================================================================================	   
