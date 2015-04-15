@@ -127,7 +127,7 @@ class Client(object):
             if(parse_opt(opt,'q')):
                 sel.status_list.append("idle")
             if(parse_opt(opt,'f')):
-                sel.status_list += ["finished","terminated","removed"]
+                sel.status_list += ["finished","terminated","removed","failed"]
             index = 0
             for o in opt:
                 if(not parse_opt(o,'-')):
@@ -400,10 +400,9 @@ def print_queue(jobs, select = None, format_str = None, message = None):
             running_time_str_ = r"%(run_time_days)02dd  %(run_time_hours)02d:%(run_time_minutes)02d:%(run_time_seconds)05.2fh"
                 
             for jid,job in jobs.items():
-
                 if(select(job)):
                     continue
-                if(job.status == "finished" or job.status == "terminated"):
+                if(job.status == "finished" or job.status == "failed" or job.status == "terminated"):
                     job.update(job.end_time)
                     tot_running_time += job.prop_dict["run_time"]
                     running_time_str = running_time_str_
@@ -418,7 +417,8 @@ def print_queue(jobs, select = None, format_str = None, message = None):
                     if(job.status == "idle"):
                         idle_count += 1 
                     
-                submited_time = time.strftime("%Y-%m-%d %H:%M:%S",job.submit_time) 
+                submited_time = time.strftime("%Y-%m-%d %H:%M:%S",job.submit_time)
+                
                 format_str = bc.bold("%(id)06d")+":"+colors[job.status]("%(status)10s")+": "+submited_time+" : "+bc.gen(running_time_str,bc.CYAN)+": %(cmdc)0.100s\n"
                 printed_queue += job.formated_output(format_str)
                                   

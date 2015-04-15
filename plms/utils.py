@@ -93,5 +93,7 @@ def finished(str):
     return bcolors.OKGREEN+str+bcolors.ENDC
 def terminated(str):
     return bcolors.RED+str+bcolors.ENDC
+def failed(str):
+    return bcolors.bold(str,bcolors.RED)
 
-colors = {'idle':queued, 'running':running, 'finished':finished, 'terminated':terminated, 'removed':terminated}
+colors = {'idle':queued, 'running':running, 'finished':finished, 'terminated':terminated, 'removed':terminated,'failed':failed}
