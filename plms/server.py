@@ -437,7 +437,11 @@ class PLMSServer(Daemon):
                     
                     #print(self.job_finish_status)
                     #print(j[1].end_time)
-                    j[1].status = "finished"
+                    j[1].exit_status = int(parse(s[1], "Status"))
+                    if(j[1].exit_status == 0):
+                        j[1].status = "finished"
+                    else:
+                        j[1].status = "failed"
                     j[1].end_time = float(parse(s[1], "End time"))
                     j[1].start_time = float(parse(s[1], "Start time"))
                     j[1].cpu_time = float(parse(s[1], "CPU time"))

@@ -7,8 +7,8 @@ class Job(object):
     and to keep some statistics about it.
     '''
     
-    statstr_2_id = {"idle":0,"running":10,"held":20,"finished":30,"terminated":40,"removed":50}
-    statid_2_str = {0:"idle",10:"running",20:"held",30:"finished",40:"terminated",50:"removed"}
+    statstr_2_id = {"idle":0,"running":10,"held":20,"finished":30,"terminated":40,"removed":50,"failed":60}
+    statid_2_str = {0:"idle",10:"running",20:"held",30:"finished",40:"terminated",50:"removed",60:"failed"}
     
     def __init__(self, id, cmd, submit_time, user, log_out='/dev/null', log_err='/dev/null', env = None, name = '', wdir = None, shell = False):
         self.id = id
@@ -27,6 +27,7 @@ class Job(object):
         self.wdir = wdir
         self.shell = shell
         self.compress_cmd = 100
+        self.exit_status = 0
     def update(self,time):
         import utils
         def get_time_tuple(time):
@@ -128,11 +129,11 @@ def job_process(socket_name, job_description):
     socket.connect("ipc://"+socket_name)
     #compose message
     msg = str(job_description.id)+"\n"
-    if(failed):
-        status = 0
-    else:
-        status = 1
-    msg += "Status: "+str(status)+"\n"
+    #if(failed):
+        #status = 0
+    #else:
+        #status = 1
+    msg += "Status: "+str(return_code)+"\n"
     msg += "Start time: "+str(start_time)+"\n"
     msg += "End time: "+str(finish_time)+"\n"
     msg += "CPU time: "+str(cpu_time)+"\n"
