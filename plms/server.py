@@ -97,17 +97,17 @@ class PLMSServer(Daemon):
         
         #self.client_socket_name = socket_path+"/pmls_client_"+scheduler_name
         #path to an ipc socket for communications with the running jobs
-        self.job_socket_name = socket_path+"/pmls_job_"+scheduler_name
+        self.job_socket_name = socket_path+"/plms_job_"+scheduler_name+"_at_"+self.host
         #path to the file which saves the state of the scheduler server when it 
         #shuts down.
-        self.statistics_file = conf_path+"/pmls_stat_"+scheduler_name+".pkl"
-        
+        self.statistics_file = conf_path+"/plms_stat_"+scheduler_name+".pkl"
+        self.client_socket_name = socket_path+"/plms_client_"+scheduler_name+"_at_"+self.host
         self.default_log_path = os.path.join(logs_path,scheduler_name+'/')
         utils.ensure_dir(self.default_log_path)
         
         
         #Deamonizing the server   
-        Daemon.__init__(self, '/tmp/mpls_'+scheduler_name+'.pid', 
+        Daemon.__init__(self, '/tmp/plms_'+scheduler_name+'.pid', 
             stdout=conf_path+"/"+scheduler_name+".log", 
             stderr=conf_path+"/"+scheduler_name+".log"
         )
@@ -161,8 +161,10 @@ class PLMSServer(Daemon):
         self.context = zmq.Context()
         self.client_socket = self.context.socket(zmq.REP)
         self.job_socket = self.context.socket(zmq.REP)
-        self.log("Binding to client socket: tcp://%s:%s"%(self.tcp_addr,self.tcp_port))
-        self.client_socket.bind("tcp://%s:%s"%(self.tcp_addr,self.tcp_port))            
+        #self.log("Binding to client socket: tcp://%s:%s"%(self.tcp_addr,self.tcp_port))
+        #self.client_socket.bind("tcp://%s:%s"%(self.tcp_addr,self.tcp_port))           
+        self.log("Binding to client socket: ipc://%s"%(self.client_socket_name))
+        self.client_socket.bind("ipc://%s"%(self.client_socket_name))           
         self.log("Binding to jobb socket: ipc://"+self.job_socket_name)
         self.job_socket.bind("ipc://"+self.job_socket_name)
 
