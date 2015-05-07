@@ -46,7 +46,6 @@ class Client(object):
                         'submit'      :(self.cmd_submit,      'Simple job submit by passing a command line string'),
                         'submit-list' :(self.cmd_submit_list, 'Submit a file with a list of commands'),
                         'avgload'     :(self.cmd_avg_load,    'Returns the average load on the host from the current scheduler'),
-                        'submit-jdf'  :(self.cmd_submit_jdf,  'Submit a job with a jdl file '+bc.warn('(deprecated)')),
                         'submit-jdl'  :(self.cmd_submit_jdf,  'Submit a job with a jdl file'),
                         'n-proc'      :(self.cmd_cn_proc,     'Configures the maximum number of simultaneous jobs'),
                         'ping'        :(self.cmd_ping,        'Pings the scheduler and returns the response time'),
@@ -210,7 +209,7 @@ class Client(object):
                 print(bcolors.BOLD+"usage: submit [input] [options]"+bcolors.ENDC)
                 print(bcolors.BOLD+"    -e  "+bcolors.ENDC+"    if set the current enviroment is not passed to the job.")
                 print(bcolors.BOLD+"example:"+bcolors.ENDC)
-                print("'submit 'sleep 3' :submits a job which executes the shell command `sleep 3'")
+                print("""'submit "sleep 3"' :submits a job which executes the shell command `sleep 3'""")
                 return
             
             if(parse_opt(opt,'e')):
