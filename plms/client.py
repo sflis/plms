@@ -345,18 +345,33 @@ class Client(object):
                     print fin.read()
 #___________________________________________________________________________________________________
     def cmd_job(self, arg, opt):
+        from job import Job
+        import time  
         if(parse_opt(opt,'h')):
-            print(bcolors.BOLD+"usage: log [job id] [options]"+bcolors.ENDC)
-            print(bcolors.BOLD+"    -e  "+bcolors.ENDC+"    select error log")
-            print(bcolors.BOLD+"    -f   "+bcolors.ENDC+"   return only file name path")
-            print(bcolors.BOLD+"    -o    "+bcolors.ENDC+"  select out log")
-            print(bcolors.BOLD+"example:"+bcolors.ENDC)
-            print("'log 23 -eo' :shows the out log as well as the error log of the job with id 23")
+            print(bcolors.BOLD+"usage: job [job id] [options]"+bcolors.ENDC)
+            print(bcolors.BOLD+"    -s  "+bcolors.ENDC+"    providing format string")
+            print(bcolors.BOLD+"format string keys:"+bcolors.ENDC)
+            #print("'log 23 -eo' :shows the out log as well as the error log of the job with id 23")
+            
+            j = Job(0, "command", time.time(), 'somebody')
+            props = utils.get_object_prop(j)
+            j.update(time.time())
+            for k in j.prop_dict.keys():
+                print(bcolors.BOLD+"    %s"%k+bcolors.ENDC)
+            #print(j.prop_dict)
+            #props = props[j.prop_dict]
+            #for k in props:
+                #print(k)
             return
+
         job, msg = self.scheduler_client.request_job(int(opt[0]))
-        
-        props = utils.get_object_prop(utils.Job())
-        props = props[prop_dict]
+        job.update(time.time())
+        if(parse_opt(opt,'s')):
+            c, index = parse_arg(opt,'s')
+            #print(index)
+            
+            print(job.formated_output(opt[index+1]).decode('string_escape'))
+
 #___________________________________________________________________________________________________        
     def print_help(self):
         usage = bcolors.BOLD+'usage: plms [command] [command arguments]'+bcolors.ENDC+'\n'
