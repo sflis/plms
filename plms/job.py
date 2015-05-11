@@ -29,6 +29,10 @@ class Job(object):
         self.compress_cmd = 100
         self.exit_status = 0
     def update(self,time):
+        if(self.status == 'finished' or self.status == 'terminated'):
+            time = self.end_time
+        elif(self.status == 'idle' or self.removed == 'removed'):
+            time = 0
         import utils
         def get_time_tuple(time):
             d = int(time/(24*3600))
