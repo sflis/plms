@@ -31,7 +31,7 @@ class Job(object):
     def update(self,time):
         if(self.status == 'finished' or self.status == 'terminated'):
             time = self.end_time
-        elif(self.status == 'idle' or self.removed == 'removed'):
+        elif(self.status == 'idle' or self.status == 'removed'):
             time = 0
         import utils
         def get_time_tuple(time):
