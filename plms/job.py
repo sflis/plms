@@ -68,6 +68,28 @@ class Job(object):
     def formated_output(self, format_str):
         return  format_str%self.prop_dict
 
+selection_keys = [k for k in Job.statstr_2_id.keys()]#+['job_id']
+#==============================================================================
+def parse_selection_expr(expr, job_list, ids):
+    import numpy as np
+    for k in selection_keys:
+        if(k in expr):
+            job_ids = list()
+            #Gather job id which are matching
+            #the selection key
+            for job in job_list:
+                if(job.status == k):
+                    job_ids.append(job.id)
+            #dynamically create a variable matching the selection
+            #key
+            exec("%s = np.array(job_ids)"%k)
+            if(expr==k):
+                expr = expr+'=='+expr
+            mask = eval(expr)
+            return eval("%s[mask]"%k)
+    mask = eval(expr)
+    ids = np.array(ids)
+    return eval("ids[mask]")
 #==============================================================================
 
 def job_process(socket_name, job_description):

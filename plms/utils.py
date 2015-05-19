@@ -31,6 +31,9 @@ def parse(string_list, parse_string, n = 0, separator=':',complete_line = False)
 
 #===================================================================================================
 def parse_opt(opt_list,opt):
+    '''Not really a parsers. Checks if an option 'opt' key is in the opt_list.
+        The assumption is that options keys are prefixed with a '-'.
+    '''
     ret = False
     index = 0
     for o in opt_list:
@@ -50,6 +53,16 @@ def parse_arg(opt_list,opt):
         index +=1
     return False, 0
 
+#===================================================================================================
+def is_integer(s):
+    '''Checks if a string can be interpreted as an integer.
+
+    '''
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
 
 #=====================================================================================================
 def get_object_prop(obj):
