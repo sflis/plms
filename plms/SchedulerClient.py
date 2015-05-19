@@ -14,7 +14,7 @@ from utils import bcolors
 #===================================================================================================
 
 class SchedulerClient(object):
-    
+
     def __init__(self, socket_name):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)
@@ -37,10 +37,10 @@ class SchedulerClient(object):
                 #raise(e)
                 #return
         self.socket.setsockopt(zmq.LINGER, 0)
-        
-        self.poller = zmq.Poller()      
+
+        self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
-#___________________________________________________________________________________________________    
+#___________________________________________________________________________________________________
     def send_msg(self, msg):
         return_msg = RetMessage(status = "FAIL")
         try:
@@ -58,40 +58,40 @@ class SchedulerClient(object):
                         break
                 else:
                     print(bcolors.BOLD+bcolors.FAIL+"Timed out"+bcolors.ENDC)
-                    break
+                    exit()
         except Exception as e:
             print(bcolors.BOLD+bcolors.FAIL+"Error while recieveing message: %s"%e+bcolors.ENDC)
-            
+
         return return_msg
-#___________________________________________________________________________________________________    
+#___________________________________________________________________________________________________
     def submit_simple_jobs(self, cmd_list, outlog_path  = None, errlog_path = None, user = "Unknown", env = None, wdir = None, shell = True):
         if(outlog_path == None or errlog_path == None):
             msg = Message('SUBMIT_JOBS', ['SIMPLE'], user)
         else:
             msg = Message( 'SUBMIT_JOBS', ['SIMPLE_LOG'], user)
-            msg.msg["outlog_path"] = outlog_path 
+            msg.msg["outlog_path"] = outlog_path
             msg.msg["errlog_path"] = errlog_path
 
         msg.msg["cmd_list"] = cmd_list
         msg.msg["env"] = env
         msg.msg["wdir"] = wdir
         msg.msg["shell"] = shell
-        
+
         ret_msg = self.send_msg(msg)
         return ret_msg
-#___________________________________________________________________________________________________    
+#___________________________________________________________________________________________________
     def submit_job_description(self, exe, args , outlog  = None, errlog = None, user = "Unknown", env = None, shell = False):
         msg = Message( 'SUBMIT_JOBS', ['JOB_DESCRIPTION'], user)
         msg.msg["executable"] = exe
         msg.msg["args"] = args
         msg.msg["env"] = env
         msg.msg["shell"] = shell
-        msg.msg["outlog"] = outlog 
+        msg.msg["outlog"] = outlog
         msg.msg["errlog"] = errlog
-                
+
         ret_msg = self.send_msg(msg)
         return ret_msg
-#___________________________________________________________________________________________________    
+#___________________________________________________________________________________________________
     def classical_submit(self, executable, var, out, err, user, queue, init_dir):
         print("Not implemented yet")
 #___________________________________________________________________________________________________
@@ -103,11 +103,11 @@ class SchedulerClient(object):
         msg = Message('CONFIGURE', ['NPROC'], user)
         msg.msg["n-proc"] = nproc
         return self.send_msg(msg)
-        
+
 #___________________________________________________________________________________________________
     def get_avg_load(self, user = ""):
         msg = Message('AVG_LOAD', '', user)
-        return self.send_msg(msg)    
+        return self.send_msg(msg)
 #___________________________________________________________________________________________________
     def ping(self, user = ""):
         msg = Message('PING', '', user)
@@ -115,9 +115,9 @@ class SchedulerClient(object):
         rec = self.send_msg(msg).split()
         finish_time = time.time()
         return (rec[1],rec[2],finish_time-start_time)
-#___________________________________________________________________________________________________    
-    def remove_jobs(self, ids = None, user = "Unknown"):    
-        
+#___________________________________________________________________________________________________
+    def remove_jobs(self, ids = None, user = "Unknown"):
+
         if(ids == None):
             opt = 'ALL'
         else:
@@ -125,19 +125,19 @@ class SchedulerClient(object):
         msg = Message('REMOVE_JOBS', opt, user)
         msg.msg["job_ids"] = ids
         return self.send_msg(msg)
-#___________________________________________________________________________________________________    
+#___________________________________________________________________________________________________
     def request_job(self, id = None, user = "Unknown"):
         if(id != None):
-            msg = Message('REQUEST_JOBS', [id], user)        
+            msg = Message('REQUEST_JOBS', [id], user)
         else:
             msg = Message('REQUEST_JOBS', id, user)
-            
+
         retmsg = self.send_msg(msg)
         if('error' in retmsg.msg.keys()):
             print(bcolors.BOLD+bcolors.FAIL+retmsg.msg['error']+bcolors.ENDC)
             sys.exit(0)
         return retmsg.msg['jobs'], retmsg
-#___________________________________________________________________________________________________        
+#___________________________________________________________________________________________________
 import signal, socket
 try:
     import DNS

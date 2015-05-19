@@ -13,7 +13,7 @@ import utils
 from utils import parse_opt,parse_arg, bcolors, colors
 from utils import bcolors as bc
 from job import Job
-
+from job import parse_selection_expr
 SchedulerInfo = collections.namedtuple("SchedulerInfo","name, socket_path, tcp_port, host")
 class Client(object):
 
@@ -153,21 +153,36 @@ class Client(object):
             #print(bcolors.BOLD+"    now  "+bcolors.ENDC+"    Terminates running jobs and shuts down scheduler.")
             #print(bcolors.BOLD+"    gentle  "+bcolors.ENDC+" Shuts down the scheduler after the currently runnings jobs have finnished.")
             return
-        job, msg = self.scheduler_client.request_job(int(opt[0]))
 
-        return_msg = self.scheduler_client.submit_simple_jobs([job.cmd], env = job.env, wdir = job.wdir, user = os.environ['USER'])
-
-        if(return_msg.status == "FAIL"):
-            print(bcolors.BOLD+bcolors.FAIL+"Resubmition failed"+bcolors.ENDC)
+        if(utils.is_integer(opt[0])):
+            job, msg = self.scheduler_client.request_job(int(opt[0]))
+            jobs = {job.id:job}
+            ids = [job.id]
         else:
-            if(len(return_msg.msg['job_ids']) == 1):
+            jobs, msg = self.scheduler_client.request_job()
+            ids = parse_selection_expr(opt[0],[v for k,v in jobs.items()],jobs.keys())
+            #job, msg = self.scheduler_client.request_job(int(opt[0]))
+        ret_ids = list()
+
+        for i in ids:
+            return_msg = self.scheduler_client.submit_simple_jobs([jobs[i].cmd], env = jobs[i].env, wdir = jobs[i].wdir, user = os.environ['USER'])
+            if(return_msg.status == "FAIL"):
+                print(bcolors.BOLD+bcolors.FAIL+"Resubmition failed"+bcolors.ENDC)
+                continue
+            ret_ids += return_msg.msg['job_ids']
+        else:
+            if(len(ret_ids) == 1):
                 print(bcolors.OKBLUE+"Succesfully resubmited job "+
                 bcolors.ENDC+bc.bold("%d "%int(opt[0]))+
                 "as job "+
-                bcolors.ENDC+bc.bold("%d "%return_msg.msg['job_ids'][0]))
+                bcolors.ENDC+bc.bold("%d "%ret_ids[0]))
             else:
                 s = bcolors.OKBLUE+"Succesfully resubmited jobs: "+bcolors.ENDC
-                for i in return_msg.msg['job_ids']:
+
+                for i in ids:
+                    s += bc.bold("%d "%i)
+                s += bcolors.OKBLUE+'\nas: '+bcolors.ENDC
+                for i in ret_ids:
                     s += bc.bold("%d "%i)
                 print(s)
 
@@ -213,15 +228,11 @@ class Client(object):
             if(yn == "yes"):
                 self.scheduler_client.remove_jobs(None)
         else:
-            if(opt[0] == "idle" or opt[0] == 'running'):
+            if("idle" in opt[0] or 'running' in opt[0] or '[' in opt[0]):
                 jobs, message = self.scheduler_client.request_job()
-                ids = list()
+                ids = parse_selection_expr(opt[0],[v for k,v in jobs.items()],jobs.keys())
 
-                for i,job in jobs.items():
-                    if(job.status == opt[0]):
-                        ids.append(job.id)
-
-                print("removed: "+self.scheduler_client.remove_jobs(ids)+"jobs.")
+                print("removed: "+self.scheduler_client.remove_jobs(ids)+" jobs.")
                 if(len(ids) <10):
                     s = "ids:"
                     for i in ids :
@@ -390,15 +401,26 @@ class Client(object):
             #for k in props:
                 #print(k)
             return
+        if(utils.is_integer(opt[0])):
+            job, msg = self.scheduler_client.request_job(int(opt[0]))
+            jobs = {job.id:job}
+            ids = [job.id]
+        else:
+            jobs, msg = self.scheduler_client.request_job()
+            ids = parse_selection_expr(opt[0],[v for k,v in jobs.items()],jobs.keys())
 
-        job, msg = self.scheduler_client.request_job(int(opt[0]))
-        job.update(time.time())
+
         if(parse_opt(opt,'s')):
             c, index = parse_arg(opt,'s')
             #print(index)
-
-            print(job.formated_output(opt[index+1]).decode('string_escape'))
-
+            s = ""
+            for i in ids:
+                jobs[i].update(time.time())
+                s += jobs[i].formated_output(opt[index+1]).decode('string_escape')
+            if("\n" == s[-1]):
+                print(s),#suppres new line
+            else:
+                print(s)
 #___________________________________________________________________________________________________
     def print_help(self):
         usage = bcolors.BOLD+'usage: plms [command] [command arguments]'+bcolors.ENDC+'\n'
