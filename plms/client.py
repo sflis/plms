@@ -36,7 +36,7 @@ class Client(object):
                          'as'          :(self.pre_cmd_get_available_sch, 'list available schedulers'),
                          'add-remote'  :(self.cmd_add_remote,            'add remote scheduler'),
                          'which'       :(self.cmd_which,                 'which scheduler is used'),
-                         'avgloadl'    :(self.cmd_avgloadl,              'list the average load on the hosts of the available schedulers' +bc.warn(' (not fully implemented yet)')),
+                         #'avgloadl'    :(self.cmd_avgloadl,              'list the average load on the hosts of the available schedulers' +bc.warn(' (not fully implemented yet)')),
                          }
         
         

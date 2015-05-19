@@ -15,7 +15,7 @@ def ensure_dir(f):
     d = os.path.dirname(f)
     if not os.path.exists(d):
         os.makedirs(d)
-#===================================================================================================	   
+#===================================================================================================
 #Simple stupid parser....
 def parse(string_list, parse_string, n = 0, separator=':',complete_line = False):
 
@@ -29,7 +29,7 @@ def parse(string_list, parse_string, n = 0, separator=':',complete_line = False)
                 el = line[1].split()
                 return el[n]
 
-#===================================================================================================       
+#===================================================================================================
 def parse_opt(opt_list,opt):
     ret = False
     index = 0
@@ -38,8 +38,8 @@ def parse_opt(opt_list,opt):
             if(opt in o):
                 return True
         index +=1
-    return False 
-#===================================================================================================       
+    return False
+#===================================================================================================
 def parse_arg(opt_list,opt):
     ret = False
     index = 0
@@ -50,11 +50,11 @@ def parse_arg(opt_list,opt):
         index +=1
     return False, 0
 
-    
-#=====================================================================================================       
+
+#=====================================================================================================
 def get_object_prop(obj):
     return [a for a in dir(obj) if not a.startswith('__') and not callable(getattr(obj,a))]
-#=====================================================================================================        
+#=====================================================================================================
 class bcolors:
     HEADER = '\033[35m\033[95m'
     OKBLUE = '\033[34m\033[94m'
@@ -68,7 +68,7 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
-    
+
     @staticmethod
     def err(str):
         return bcolors.FAIL+bcolors.BOLD+str+bcolors.ENDC
@@ -84,7 +84,7 @@ class bcolors:
     @staticmethod
     def warn(str):
         return bcolors.WARNING+bcolors.BOLD+str+bcolors.ENDC
-    
+
 def queued(str):
     return bcolors.WARNING+str+bcolors.ENDC
 def running(str):
