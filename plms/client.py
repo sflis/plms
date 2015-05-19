@@ -16,22 +16,22 @@ from job import Job
 
 SchedulerInfo = collections.namedtuple("SchedulerInfo","name, socket_path, tcp_port, host")
 class Client(object):
-    
+
     def __init__(self, path_here):
         self.client_name =  "client_"+socket.gethostname()
-        self.scheduler_client = None     
-        
+        self.scheduler_client = None
+
         self.conf_file = open(os.path.join(path_here,"plms.conf"),'r')
-        
+
         conf = self.conf_file.readlines()
         self.socket_path = utils.parse(conf,"socket_path")
         self.conf_path = utils.parse(conf,"conf_path")
         self.conf_path_client = utils.parse(conf,"conf_path_client")
         self.state_file = os.path.join(self.conf_path_client, self.client_name+".pkl")
         self.current_scheduler = None
-        self.available_schedulers = dict()  
+        self.available_schedulers = dict()
         self.load_state()
- 
+
         self.load_state()
         self.pre_cmd =  {'cs'          :(self.pre_cmd_change_sch,        'change scheduler'),
                          'as'          :(self.pre_cmd_get_available_sch, 'list available schedulers'),
@@ -39,8 +39,8 @@ class Client(object):
                          'which'       :(self.cmd_which,                 'which scheduler is used'),
                          'avgloadl'    :(self.cmd_avgloadl,              'list the average load on the hosts of the available schedulers' +bc.warn(' (not fully implemented yet)')),
                          }
-        
-        
+
+
         self.commands = {'q'          :(self.cmd_print_queue, 'Prints the queue'),
                         'stop'        :(self.cmd_stop,        'Stop scheduler'),
                         'rm'          :(self.cmd_rm,          'Remove jobs by job id'),
@@ -49,6 +49,7 @@ class Client(object):
                         'avgload'     :(self.cmd_avg_load,    'Returns the average load on the host from the current scheduler'),
                         'submit-jdf'  :(self.cmd_submit_jdf,  'Submit a job with a jdl file '+bc.warn('(deprecated)')),
                         'submit-jdl'  :(self.cmd_submit_jdf,  'Submit a job with a jdl file'),
+                        'resubmit'    :(self.cmd_resubmit,    'Resubmit a job'),
                         'n-proc'      :(self.cmd_cn_proc,     'Configures the maximum number of simultaneous jobs'),
                         'ping'        :(self.cmd_ping,        'Pings the scheduler and returns the response time'),
                         'log'         :(self.cmd_log,         'Fast access to log files via job id number'),
@@ -64,17 +65,17 @@ class Client(object):
             default_scheduler = socket.gethostname()+"_at_"+socket.gethostname()
             print("Falling back to local a scheduler:'%s'"%default_scheduler)
             self.current_scheduler = SchedulerInfo(socket.gethostname(),self.socket_path,"----",socket.gethostname())
-            self.available_schedulers[default_scheduler] = self.current_scheduler   
+            self.available_schedulers[default_scheduler] = self.current_scheduler
             return
         state = pickle.load(open(self.state_file))
         self.current_scheduler = state["current_scheduler"]
         self.available_schedulers = state["available_schedulers"]
-        
+
 #___________________________________________________________________________________________________
     def save_state(self):
         state = dict()
         state["current_scheduler"] = self.current_scheduler
-        state["available_schedulers"] = self.available_schedulers 
+        state["available_schedulers"] = self.available_schedulers
         pickle.dump(state, open(self.state_file, 'wb'))
 #___________________________________________________________________________________________________
     def initialize_socket(self):
@@ -106,7 +107,7 @@ class Client(object):
 #___________________________________________________________________________________________________
     def pre_cmd_change_sch(self,arg, opt):
         self.current_scheduler = self.available_schedulers[opt[0]]
-#___________________________________________________________________________________________________    
+#___________________________________________________________________________________________________
     def cmd_print_queue(self,arg, opt):
         format_str = None
         if(opt == None):
@@ -137,13 +138,39 @@ class Client(object):
                     print(bcolors.HEADER+"Instead use -r, -f or -q. See the help with 'q -h'."+bcolors.ENDC)
                     return
                 index += 1
-            
+
             (s,index) = parse_arg(opt,'s')
             if(s):
                 format_str = opt[index + 1]
-                    
+
         jobs, message = self.scheduler_client.request_job()
-        print(print_queue(jobs,sel,format_str,message).decode('string_escape'))   
+        print(print_queue(jobs,sel,format_str,message).decode('string_escape'))
+
+#___________________________________________________________________________________________________
+    def cmd_resubmit(self, arg, opt):
+        if((opt != None and parse_opt(opt,'h')) or opt == None):
+            print(bcolors.BOLD+"usage: resubmit [job id]"+bcolors.ENDC)
+            #print(bcolors.BOLD+"    now  "+bcolors.ENDC+"    Terminates running jobs and shuts down scheduler.")
+            #print(bcolors.BOLD+"    gentle  "+bcolors.ENDC+" Shuts down the scheduler after the currently runnings jobs have finnished.")
+            return
+        job, msg = self.scheduler_client.request_job(int(opt[0]))
+
+        return_msg = self.scheduler_client.submit_simple_jobs([job.cmd], env = job.env, wdir = job.wdir, user = os.environ['USER'])
+
+        if(return_msg.status == "FAIL"):
+            print(bcolors.BOLD+bcolors.FAIL+"Resubmition failed"+bcolors.ENDC)
+        else:
+            if(len(return_msg.msg['job_ids']) == 1):
+                print(bcolors.OKBLUE+"Succesfully resubmited job "+
+                bcolors.ENDC+bc.bold("%d "%int(opt[0]))+
+                "as job "+
+                bcolors.ENDC+bc.bold("%d "%return_msg.msg['job_ids'][0]))
+            else:
+                s = bcolors.OKBLUE+"Succesfully resubmited jobs: "+bcolors.ENDC
+                for i in return_msg.msg['job_ids']:
+                    s += bc.bold("%d "%i)
+                print(s)
+
 #___________________________________________________________________________________________________
     def cmd_stop(self,arg, opt):
         if(opt != None and parse_opt(opt,'h')):
@@ -175,7 +202,7 @@ class Client(object):
             else:
                 print(msg.error)
         else:
-            print(bcolors.BOLD+bcolors.FAIL+"Error: Given stop mode not valid"+bcolors.ENDC) 
+            print(bcolors.BOLD+bcolors.FAIL+"Error: Given stop mode not valid"+bcolors.ENDC)
 #___________________________________________________________________________________________________
     def cmd_rm(self, arg, opt):
         if(opt == None):
@@ -189,15 +216,15 @@ class Client(object):
             if(opt[0] == "idle" or opt[0] == 'running'):
                 jobs, message = self.scheduler_client.request_job()
                 ids = list()
-                
+
                 for i,job in jobs.items():
                     if(job.status == opt[0]):
                         ids.append(job.id)
-                        
+
                 print("removed: "+self.scheduler_client.remove_jobs(ids)+"jobs.")
                 if(len(ids) <10):
                     s = "ids:"
-                    for i in ids : 
+                    for i in ids :
                         s += " %d"%i
                     print(s)
             else:
@@ -215,14 +242,14 @@ class Client(object):
                 print(bcolors.BOLD+"example:"+bcolors.ENDC)
                 print("'submit 'sleep 3' :submits a job which executes the shell command `sleep 3'")
                 return
-            
+
             if(parse_opt(opt,'e')):
                 env = None
             else:
                 env = os.environ
             return_msg = self.scheduler_client.submit_simple_jobs([opt[0]], env = env, wdir = os.getcwd(), user = os.environ['USER'])
-        
-        
+
+
         if(return_msg.status == "FAIL"):
             print(bcolors.BOLD+bcolors.FAIL+"Submition failed"+bcolors.ENDC)
         else:
@@ -239,7 +266,7 @@ class Client(object):
             print(bcolors.FAIL+bcolors.BOLD+"Error: no file provided"+bcolors.ENDC)
         else:
             joblist = open(opt[0],'r').readlines()
-            return_msg = self.scheduler_client.submit_simple_jobs(joblist, env = os.environ)	
+            return_msg = self.scheduler_client.submit_simple_jobs(joblist, env = os.environ)
             if(len(return_msg.msg['job_ids']) == 1):
                 print(bcolors.OKBLUE+"Succesfully submited job: "+bcolors.ENDC+bc.bold("%d "%return_msg.msg['job_ids'][0]))
             else:
@@ -254,7 +281,7 @@ class Client(object):
         print("Host: %s, Name: %s"%(host,name))
 #___________________________________________________________________________________________________
     def cmd_submit_jdf(self, arg, opt):
-        
+
         if(parse_opt(opt,'h')):
             print(bcolors.BOLD+"usage: submit-jdf [input] [options]"+bcolors.ENDC)
             print(bcolors.BOLD+"    -f  "+bcolors.ENDC+"    input interpreted as a file containing paths to jdl files (not implemented yet)")
@@ -268,19 +295,19 @@ class Client(object):
         args    = utils.parse(jdf, "Args", separator='=', complete_line=True)
         use_env = utils.parse(jdf, "EnvPass", separator='=')
         shell   = utils.parse(jdf, "Shell", separator='=')
-        
+
         if(shell == "True" or shell == "true"):
             shell = True
         else:
             shell = False
-        
+
         out = utils.parse(jdf, "Out", separator='=')
         err = utils.parse(jdf, "Err", separator='=')
         if(use_env == "true"):
             env = os.environ
         else:
             env = None
-        
+
         self.scheduler_client.submit_job_description(exe, args , out , err, os.environ['USER'], env, shell)
 #___________________________________________________________________________________________________
     def cmd_which(self, arg, opt):
@@ -293,8 +320,8 @@ class Client(object):
         addr = opt[1].split(':')
         sinfo = SchedulerInfo(opt[0],addr[0],addr[1],"")
         self.available_schedulers[addr[0]+":"+opt[0]] = sinfo
-        
-#___________________________________________________________________________________________________        
+
+#___________________________________________________________________________________________________
     def cmd_avgloadl(self,arg, opt):
         print("Not implemented yet")
         return
@@ -306,7 +333,7 @@ class Client(object):
             try:
                 temp_client.initialize_socket()
             except:
-                
+
                 print("timed out")
                 import sys
                 sys.stdout.flush()
@@ -316,7 +343,7 @@ class Client(object):
             print("Ping: %s,  %fms"%(self.current_scheduler.tcp_addr,dt*1e3))
             print("Host: %s, Name: %s"%(host,name))
             temp_client.cmd_avg_load([],[])
-#___________________________________________________________________________________________________        
+#___________________________________________________________________________________________________
     def cmd_log(self, arg, opt):
         if(parse_opt(opt,'h')):
             print(bcolors.BOLD+"usage: log [job id] [options]"+bcolors.ENDC)
@@ -326,17 +353,17 @@ class Client(object):
             print(bcolors.BOLD+"example:"+bcolors.ENDC)
             print("'log 23 -eo' :shows the out log as well as the error log")
             return
-        
+
         job, msg = self.scheduler_client.request_job(int(opt[0]))
         file_path = dict()
-        
-        
+
+
         if(parse_opt(opt,'o') or len(opt) == 1):
             file_path['log out'] = (job.log_out)
-            
+
         if(parse_opt(opt,'e')):
             file_path['log err'] = (job.log_err)
-                
+
         for k,v in file_path.items():
             print(bcolors.BOLD+k+": "+v+bcolors.ENDC)
             if(not parse_opt(opt,'f')):
@@ -346,13 +373,13 @@ class Client(object):
 #___________________________________________________________________________________________________
     def cmd_job(self, arg, opt):
         from job import Job
-        import time  
+        import time
         if(parse_opt(opt,'h')):
             print(bcolors.BOLD+"usage: job [job id] [options]"+bcolors.ENDC)
             print(bcolors.BOLD+"    -s  "+bcolors.ENDC+"    providing format string")
             print(bcolors.BOLD+"format string keys:"+bcolors.ENDC)
             #print("'log 23 -eo' :shows the out log as well as the error log of the job with id 23")
-            
+
             j = Job(0, "command", time.time(), 'somebody')
             props = utils.get_object_prop(j)
             j.update(time.time())
@@ -369,10 +396,10 @@ class Client(object):
         if(parse_opt(opt,'s')):
             c, index = parse_arg(opt,'s')
             #print(index)
-            
+
             print(job.formated_output(opt[index+1]).decode('string_escape'))
 
-#___________________________________________________________________________________________________        
+#___________________________________________________________________________________________________
     def print_help(self):
         usage = bcolors.BOLD+'usage: plms [command] [command arguments]'+bcolors.ENDC+'\n'
         usage +='      valid commands are:\n'
@@ -380,10 +407,10 @@ class Client(object):
                 usage +=bcolors.BOLD + "     %+15s      "%(cmd_key) + bcolors.ENDC+" %-15s\n"%(self.pre_cmd[cmd_key][1])
         for cmd_key in self.commands.keys():
                 usage +=bcolors.BOLD + "     %+15s    "%(cmd_key) + bcolors.ENDC+"   %-15s\n"%(self.commands[cmd_key][1])
-        return usage              
+        return usage
 
 
-#___________________________________________________________________________________________________        
+#___________________________________________________________________________________________________
 #===================================================================================================
 def print_queue(jobs, select = None, format_str = None, message = None):
         import time
@@ -398,7 +425,7 @@ def print_queue(jobs, select = None, format_str = None, message = None):
         if(format_str == None):
             printed_queue= bcolors.BOLD+"    ID     STATUS       SUBMITED            RUNNING TIME         CMD\n"+bcolors.ENDC
             running_time_str_ = r"%(run_time_days)02dd  %(run_time_hours)02d:%(run_time_minutes)02d:%(run_time_seconds)05.2fh"
-                
+
             for jid,job in jobs.items():
                 if(select(job)):
                     continue
@@ -411,18 +438,18 @@ def print_queue(jobs, select = None, format_str = None, message = None):
                     running_count += 1
                     tot_running_time += job.prop_dict["run_time"]
                     running_time_str = running_time_str_
-                else: 
+                else:
                     job.update(now)
                     running_time_str = "--d  --:--:--.--h"
                     if(job.status == "idle"):
-                        idle_count += 1 
-                    
+                        idle_count += 1
+
                 submited_time = time.strftime("%Y-%m-%d %H:%M:%S",job.submit_time)
-                
+
                 format_str = bc.bold("%(id)06d")+":"+colors[job.status]("%(status)10s")+": "+submited_time+" : "+bc.gen(running_time_str,bc.CYAN)+": %(cmdc)0.100s\n"
                 printed_queue += job.formated_output(format_str)
-                                  
-                
+
+
             d = int(tot_running_time/(24*3600))
             h = int((tot_running_time-d*(24*3600))/3600)
             m = int((tot_running_time-d*(24*3600)-h*3600)/60)
@@ -451,32 +478,32 @@ def print_queue(jobs, select = None, format_str = None, message = None):
 class Selector(object):
     def  __init__(self, status_list = list()):
         self.status_list = status_list
-     
+
     def __call__(self,job):
         ret = True
         if(job.status in self.status_list):
             ret = False
-            
+
         return ret
-    
+
     def select(self, job):
         ret = True
         if(job.status in self.status_list):
             ret = False
-            
+
         return ret
-        
-        
-        
+
+
+
 #===================================================================================================
 def main(command, options, client):
-    
+
     inpre = False
     if(command in client.pre_cmd.keys()):
         client.pre_cmd[command][0](None, options)
         inpre = True
-    
-    
+
+
     if(command in client.commands.keys()):
         client.initialize_socket()
         client.commands[command][0](None, options)
@@ -484,6 +511,3 @@ def main(command, options, client):
         if(not inpre):
             print(bcolors.WARNING+"Command '%s' not recognized"%command+bcolors.ENDC)
             print(client.print_help())
-
-    
-    
