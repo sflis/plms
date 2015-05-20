@@ -47,6 +47,7 @@ class Client(object):
                         'submit-list' :(self.cmd_submit_list, 'Submit a file with a list of commands'),
                         'avgload'     :(self.cmd_avg_load,    'Returns the average load on the host from the current scheduler'),
                         'submit-jdl'  :(self.cmd_submit_jdf,  'Submit a job with a jdl file'),
+                        'resubmit'    :(self.cmd_resubmit,    'Resubmit a job'),
                         'n-proc'      :(self.cmd_cn_proc,     'Configures the maximum number of simultaneous jobs'),
                         'ping'        :(self.cmd_ping,        'Pings the scheduler and returns the response time'),
                         'log'         :(self.cmd_log,         'Fast access to log files via job id number'),
