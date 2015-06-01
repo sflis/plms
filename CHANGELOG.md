@@ -10,8 +10,8 @@ Changes since v0.1.7
 - when the client times out no ugly python trace-backs are printed out.
 
 
-2015-05-19 v0.1.7 Release
- --------------------------------------------------------------------------------
+v0.1.7 Release 2015-05-19 
+--------------------------------------------------------------------------------
 Added change log and release notes. Changes since v0.1.6
 
 - added version numbers (not used yet)
