@@ -28,6 +28,7 @@ class Job(object):
         self.shell = shell
         self.compress_cmd = 100
         self.exit_status = 0
+
     def update(self,time):
         if(self.status == 'finished' or self.status == 'terminated'):
             time = self.end_time
@@ -83,6 +84,7 @@ def parse_selection_expr(expr, job_list, ids):
             #dynamically create a variable matching the selection
             #key
             exec("%s = np.array(job_ids)"%k)
+
             if(expr==k):
                 expr = expr+'=='+expr
             mask = eval(expr)

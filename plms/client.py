@@ -41,6 +41,7 @@ class Client(object):
 
 
         self.commands = {'q'          :(self.cmd_print_queue, 'Prints the queue'),
+                        'queue'       :(self.cmd_print_queue, 'Print the queue (Same as `q`)'),
                         'stop'        :(self.cmd_stop,        'Stop scheduler'),
                         'rm'          :(self.cmd_rm,          'Remove jobs by job id'),
                         'submit'      :(self.cmd_submit,      'Simple job submit by passing a command line string'),
