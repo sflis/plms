@@ -355,6 +355,7 @@ class Client(object):
             temp_client.cmd_avg_load([],[])
 #___________________________________________________________________________________________________
     def cmd_log(self, arg, opt):
+        import errno
         if(parse_opt(opt,'h')):
             print(bcolors.BOLD+"usage: log [job id] [options]"+bcolors.ENDC)
             print(bcolors.BOLD+"    -e  "+bcolors.ENDC+"    select error log")
@@ -385,8 +386,12 @@ class Client(object):
                         pass
                     else:
                         continue
-                with open(v, 'r') as fin:
-                    print fin.read()
+                try:
+                    with open(v, 'r') as fin:
+                        sys.stdout.write(fin.read())
+                except IOError as e:
+                    if e.errno == errno.EPIPE:
+                        exit()
 #___________________________________________________________________________________________________
     def cmd_job(self, arg, opt):
         from job import Job
@@ -432,9 +437,9 @@ class Client(object):
     def print_help(self):
         usage = bcolors.BOLD+'usage: plms [command] [command arguments]'+bcolors.ENDC+'\n'
         usage +='      valid commands are:\n'
-        for cmd_key in self.pre_cmd.keys():
+        for cmd_key in sorted(self.pre_cmd.keys()):
                 usage +=bcolors.BOLD + "     %+15s      "%(cmd_key) + bcolors.ENDC+" %-15s\n"%(self.pre_cmd[cmd_key][1])
-        for cmd_key in self.commands.keys():
+        for cmd_key in sorted(self.commands.keys()):
                 usage +=bcolors.BOLD + "     %+15s    "%(cmd_key) + bcolors.ENDC+"   %-15s\n"%(self.commands[cmd_key][1])
         return usage
 
