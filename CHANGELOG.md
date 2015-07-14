@@ -20,4 +20,4 @@ Added change log and release notes. Changes since v0.1.6
 - removed the deprecated jdf-submit command and the non-functioning avgloadl command.
 - help message fixes.
 - updated the README file to .rst format.
-- the job command is no able to query jobs. However only the queue fields are accessible for now.
+- the job command is now able to query jobs. However only the queue fields are accessible for now.
