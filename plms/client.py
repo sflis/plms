@@ -119,7 +119,7 @@ class Client(object):
                 print(bcolors.BOLD+"example:"+bcolors.ENDC)
                 print("'q -rq' :shows the queued and running jobs")
                 return
-            sel = Selector()
+            sel = job.StatusSelector()
             if(parse_opt(opt,'r')):
                 sel.status_list.append("running")
             if(parse_opt(opt,'q')):
