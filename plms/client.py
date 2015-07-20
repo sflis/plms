@@ -12,8 +12,9 @@ from SchedulerClient import SchedulerClient
 import utils
 from utils import parse_opt,parse_arg, bcolors, colors
 from utils import bcolors as bc
-from job import Job
-from job import parse_selection_expr
+from job import Job, parse_selection_expr
+import job
+
 SchedulerInfo = collections.namedtuple("SchedulerInfo","name, tcp_addr, tcp_port, host")
 class Client(object):
 
@@ -31,7 +32,6 @@ class Client(object):
         self.available_schedulers = dict()
         self.load_state()
 
-        self.load_state()
         self.pre_cmd =  {'cs'          :(self.pre_cmd_change_sch,        'change scheduler'),
                          'as'          :(self.pre_cmd_get_available_sch, 'list available schedulers'),
                          'add-remote'  :(self.cmd_add_remote,            'add remote scheduler'),
@@ -108,7 +108,7 @@ class Client(object):
     def cmd_print_queue(self,arg, opt):
         format_str = None
         if(opt == None):
-            sel = Selector(["idle","running"])
+            sel = job.StatusSelector(["idle","running"])
         else:
             if(parse_opt(opt,'h')):
                 print(bcolors.BOLD+"usage: q [options]"+bcolors.ENDC)
@@ -508,24 +508,7 @@ def print_queue(jobs, select = None, format_str = None, message = None):
                 printed_queue += job.formated_output(format_str)
 
         return printed_queue
-#===================================================================================================
-class Selector(object):
-    def  __init__(self, status_list = list()):
-        self.status_list = status_list
 
-    def __call__(self,job):
-        ret = True
-        if(job.status in self.status_list):
-            ret = False
-
-        return ret
-
-    def select(self, job):
-        ret = True
-        if(job.status in self.status_list):
-            ret = False
-
-        return ret
 
 
 

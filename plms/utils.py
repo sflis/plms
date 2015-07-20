@@ -18,7 +18,17 @@ def ensure_dir(f):
 #===================================================================================================
 #Simple stupid parser....
 def parse(string_list, parse_string, n = 0, separator=':',complete_line = False):
+    ''' A simple key-value parser.
 
+        Finds the line in which a parse string is present and returns the associated
+        value. Example of a default format steering file:
+        key1:   value1
+        key2:   value2
+        arguments:
+        string_list -- the list of strings to be searched for the key
+        parse_string -- the key word to be found
+        n -- if not the first value after keyword us
+    '''
     for line in string_list:
         line = line.split(separator, 1)
 
@@ -31,7 +41,7 @@ def parse(string_list, parse_string, n = 0, separator=':',complete_line = False)
 
 #===================================================================================================
 def parse_opt(opt_list,opt):
-    '''Not really a parsers. Checks if an option 'opt' key is in the opt_list.
+    '''Not really a parser. Checks if an option 'opt' key is in the opt_list.
         The assumption is that options keys are prefixed with a '-'.
     '''
     ret = False
@@ -69,6 +79,8 @@ def get_object_prop(obj):
     return [a for a in dir(obj) if not a.startswith('__') and not callable(getattr(obj,a))]
 #=====================================================================================================
 class bcolors:
+    '''A small class that contains definitions of terminal colors.
+    '''
     HEADER = '\033[35m\033[95m'
     OKBLUE = '\033[34m\033[94m'
     OKGREEN = '\033[32m\033[92m'

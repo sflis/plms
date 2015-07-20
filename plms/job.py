@@ -7,6 +7,7 @@ class Job(object):
     and to keep some statistics about it.
     '''
 
+    #dictionaries to convert between the numerical and string representations of the job status
     statstr_2_id = {"idle":0,"running":10,"held":20,"finished":30,"terminated":40,"removed":50,"failed":60}
     statid_2_str = {0:"idle",10:"running",20:"held",30:"finished",40:"terminated",50:"removed",60:"failed"}
 
@@ -30,6 +31,11 @@ class Job(object):
         self.exit_status = 0
 
     def update(self,time):
+        '''Updates the job statistics with respect to a given time.
+
+            arguments:
+            time -- the time to wich the object should be updated to.
+        '''
         if(self.status == 'finished' or self.status == 'terminated'):
             time = self.end_time
         elif(self.status == 'idle' or self.status == 'removed'):
@@ -69,9 +75,37 @@ class Job(object):
     def formated_output(self, format_str):
         return  format_str%self.prop_dict
 
+
 selection_keys = [k for k in Job.statstr_2_id.keys()]#+['job_id']
+#===================================================================================================
+class StatusSelector(object):
+    def  __init__(self, status_list = list()):
+        self.status_list = status_list
+
+    def __call__(self,job):
+        ret = True
+        if(job.status in self.status_list):
+            ret = False
+
+        return ret
+
+    def select(self, job):
+        ret = True
+        if(job.status in self.status_list):
+            ret = False
+
+        return ret
+
 #==============================================================================
 def parse_selection_expr(expr, job_list, ids):
+    '''Evaluates a python expression to select jobs from the given list of jobs.
+
+        arguments:
+        expr     -- python expresion (string)
+        job_list -- list of Job objects
+        ids      -- a list of job id mapping to the job list.
+
+    '''
     import numpy as np
     for k in selection_keys:
         if(k in expr):
@@ -95,11 +129,17 @@ def parse_selection_expr(expr, job_list, ids):
 #==============================================================================
 
 def job_process(socket_name, job_description):
-    '''This function wraps the job. It executes the command
-    found in the job_description and redirects all output according
-    to the job_description to the appropriate log files.
-    It is also responsible to monitor the execution (NOTE:not completely implemented yet)
-    and notify the scheduler once the job has finished execution.
+    '''This function wraps the job command to be executed.
+
+       It executes the command found in the job_description and redirects all
+       output according to the job_description to the appropriate log files.
+       It is also responsible to monitor the execution (NOTE:not completely
+       implemented yet) and notify the scheduler once the job has finished
+       execution.
+
+       arguments:
+       socket_name     -- ipc socket path to the scheduler job socket
+       job_description -- a Job object
     '''
     import sys
     import os
