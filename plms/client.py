@@ -229,17 +229,18 @@ class Client(object):
                 jobs, message = self.scheduler_client.request_job()
 
                 ids = parse_selection_expr(opt[0],[v for k,v in jobs.items()],jobs.keys())
-
-                print("removed: "+self.scheduler_client.remove_jobs(ids)+" jobs.")
-
+                if(len(ids)<1):
+                    print(bc.gen('No jobs found to be removed', bc.OKBLUE))
+                    return
+                print(bc.gen("removed: ", bc.OKBLUE)+bc.bold(self.scheduler_client.remove_jobs(ids))+bc.gen(" jobs",bc.OKBLUE))
                 if(len(ids) <10):
-                    s = "ids:"
+                    s = bc.gen("ids:", bc.OKBLUE)
                     for i in ids :
-                        s += " %d"%i
+                        s += bc.bold(" %d"%i)
                     print(s)
             else:
                 ids = [int(i) for i in opt]
-                print("removed: "+self.scheduler_client.remove_jobs(ids)+"jobs")
+                print(bc.gen("removed: ",bc.OKBLUE)+bc.bold(self.scheduler_client.remove_jobs(ids))+bc.gen(" jobs",bc.OKBLUE))
 #___________________________________________________________________________________________________
     def cmd_submit(self,arg, opt):
         if(opt == None):
