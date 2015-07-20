@@ -413,6 +413,12 @@ class Client(object):
             #for k in props:
                 #print(k)
             return
+
+        #TODO: add more shortcuts
+        #Shortcut for returning the job command
+        if(parse_opt(opt,'c') or len(opt) == 1):
+            format_str = "%(cmd)s\n"
+
         if(utils.is_integer(opt[0])):
             job, msg = self.scheduler_client.request_job(int(opt[0]))
             jobs = {job.id:job}
@@ -421,18 +427,21 @@ class Client(object):
             jobs, msg = self.scheduler_client.request_job()
             ids = parse_selection_expr(opt[0],[v for k,v in jobs.items()],jobs.keys())
 
-
+        #extract format string from option/argument list
         if(parse_opt(opt,'s')):
             c, index = parse_arg(opt,'s')
             #print(index)
-            s = ""
-            for i in ids:
-                jobs[i].update(time.time())
-                s += jobs[i].formated_output(opt[index+1]).decode('string_escape')
-            if("\n" == s[-1]):
-                print(s),#suppres new line
-            else:
-                print(s)
+            format_str = opt[index+1]
+
+        #generate output given the format string.
+        s = ""
+        for i in ids:
+            jobs[i].update(time.time())
+            s += jobs[i].formated_output(format_str).decode('string_escape')
+        if("\n" == s[-1]):
+            print(s) #suppres extra new line at the end
+        else:
+            print(s)
 #___________________________________________________________________________________________________
 
     def print_help(self):
