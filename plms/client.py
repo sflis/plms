@@ -225,22 +225,24 @@ class Client(object):
             if(yn == "yes"):
                 self.scheduler_client.remove_jobs(None)
         else:
-            if("idle" in opt[0] or 'running' in opt[0] or '[' in opt[0]):
-                jobs, message = self.scheduler_client.request_job()
+            ids = list()
+            jobs, message = self.scheduler_client.request_job()
+            for a in opt:
+                #If argument is a number interpret as job id
+                if(utils.is_integer(a)):
+                    ids.append(int(a))
+                else:
+                    ids += list(parse_selection_expr(a,[v for k,v in jobs.items()],jobs.keys()))
+            if(len(ids)<1):
+                print(bc.gen('No jobs found to be removed', bc.OKBLUE))
+                return
+            print(bc.gen("removed: ", bc.OKBLUE)+bc.bold(self.scheduler_client.remove_jobs(ids))+bc.gen(" jobs",bc.OKBLUE))
+            if(len(ids) <10):
+                s = bc.gen("ids:", bc.OKBLUE)
+                for i in ids :
+                    s += bc.bold(" %d"%i)
+                print(s)
 
-                ids = parse_selection_expr(opt[0],[v for k,v in jobs.items()],jobs.keys())
-                if(len(ids)<1):
-                    print(bc.gen('No jobs found to be removed', bc.OKBLUE))
-                    return
-                print(bc.gen("removed: ", bc.OKBLUE)+bc.bold(self.scheduler_client.remove_jobs(ids))+bc.gen(" jobs",bc.OKBLUE))
-                if(len(ids) <10):
-                    s = bc.gen("ids:", bc.OKBLUE)
-                    for i in ids :
-                        s += bc.bold(" %d"%i)
-                    print(s)
-            else:
-                ids = [int(i) for i in opt]
-                print(bc.gen("removed: ",bc.OKBLUE)+bc.bold(self.scheduler_client.remove_jobs(ids))+bc.gen(" jobs",bc.OKBLUE))
 #___________________________________________________________________________________________________
     def cmd_submit(self,arg, opt):
         if(opt == None):
@@ -439,7 +441,7 @@ class Client(object):
             jobs[i].update(time.time())
             s += jobs[i].formated_output(format_str).decode('string_escape')
         if("\n" == s[-1]):
-            print(s) #suppres extra new line at the end
+            print(s) #suppress extra new line at the end
         else:
             print(s)
 #___________________________________________________________________________________________________

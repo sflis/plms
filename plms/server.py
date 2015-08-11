@@ -26,33 +26,33 @@ from message import Message, RetMessage
 #++++++Class: Server++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
 class PLMSServer(Daemon):
-    ''' The PLMSServer (python local micro scheduler server) is  a simple scheduler class which handles 
+    ''' The PLMSServer (python local micro scheduler server) is  a simple scheduler class which handles
         job scheduling on local machines through communications
         whith the a client.
     '''
-    
-    
+
+
     PMLSconf = collections.namedtuple("PMLSconf","tcp_addr, tcp_port, logs_path, n_proc_limit, time_limit, load_state, socket_path")
-    
-    def __init__(self, 
+
+    def __init__(self,
         scheduler_name         ,#name of the scheduler
-        conf_path              ,#path to the configuration file 
+        conf_path              ,#path to the configuration file
         conf = None             #configuration if no configuration file exists yet
         ):
-        
+
         import socket
-        #Getting  and setting host name and scheduler name 
+        #Getting  and setting host name and scheduler name
         self.host = socket.gethostname()
         self.scheduler_name = scheduler_name
         self.configure_file = os.path.join(conf_path, scheduler_name+".conf")
-        
+
         #initializing log output buffer (a string)
         self.log_output = ""
         self.hold_output = True
         self.version_major = utils.VERSION_MAJOR
         self.version_minor = utils.VERSION_MINOR
         self.version_patch = utils.VERSION_PATCH
-        
+
         #if no configuration is given and a configuration file is found
         #the configuration is read from the conf file.
         if(os.path.isfile(self.configure_file) and conf == None):
@@ -94,25 +94,25 @@ class PLMSServer(Daemon):
             f.write("proc_time_limit:                                                          %d\n"%conf.time_limit)
             f.write("load_state:                                                               %s\n"%conf.load_state)
 
-        
+
         #self.client_socket_name = socket_path+"/pmls_client_"+scheduler_name
         #path to an ipc socket for communications with the running jobs
         self.job_socket_name = socket_path+"/pmls_job_"+scheduler_name
-        #path to the file which saves the state of the scheduler server when it 
+        #path to the file which saves the state of the scheduler server when it
         #shuts down.
         self.statistics_file = conf_path+"/pmls_stat_"+scheduler_name+".pkl"
-        
+
         self.default_log_path = os.path.join(logs_path,scheduler_name+'/')
         utils.ensure_dir(self.default_log_path)
-        
-        
-        #Deamonizing the server   
-        Daemon.__init__(self, '/tmp/mpls_'+scheduler_name+'.pid', 
-            stdout=conf_path+"/"+scheduler_name+".log", 
+
+
+        #Deamonizing the server
+        Daemon.__init__(self, '/tmp/mpls_'+scheduler_name+'.pid',
+            stdout=conf_path+"/"+scheduler_name+".log",
             stderr=conf_path+"/"+scheduler_name+".log"
         )
-       
-        
+
+
         self.queue = list()
         self.jobs = list()
         self.finished_jobs = list()
@@ -130,15 +130,15 @@ class PLMSServer(Daemon):
                          'PING'         :self.command_PING,
                          'REQUEST_JOBS' :self.command_REQUEST_JOBS,
                          }
-        
+
         if(init):
             self.load_state()
-            
+
         atexit.register(self.finish)
 #___________________________________________________________________________________________________
     def load_state(self):
-        ''' Loads the state of the scheduler from a previous session. 
-      
+        ''' Loads the state of the scheduler from a previous session.
+
         '''
         self.log("Loading scheduler state")
         if(not os.path.isfile(self.statistics_file)):
@@ -155,23 +155,23 @@ class PLMSServer(Daemon):
 #___________________________________________________________________________________________________
     def init_sockets(self):
         ''' Initializes and binds to sockets for client-server communication (tcp socket) and
-            job-server communication (ipc socket). 
+            job-server communication (ipc socket).
         '''
         self.log("Initilizing sockets")
         self.context = zmq.Context()
         self.client_socket = self.context.socket(zmq.REP)
         self.job_socket = self.context.socket(zmq.REP)
         self.log("Binding to client socket: tcp://%s:%s"%(self.tcp_addr,self.tcp_port))
-        self.client_socket.bind("tcp://%s:%s"%(self.tcp_addr,self.tcp_port))            
+        self.client_socket.bind("tcp://%s:%s"%(self.tcp_addr,self.tcp_port))
         self.log("Binding to jobb socket: ipc://"+self.job_socket_name)
         self.job_socket.bind("ipc://"+self.job_socket_name)
 
 #___________________________________________________________________________________________________
     def command_SUBMIT_JOBS(self, msg):
-        ''' Processes and submits a list of jobs. 
+        ''' Processes and submits a list of jobs.
         '''
         return_msg = RetMessage(server = self, status = "SUCCES")
-    
+
         ids = self.parse_job_submit_list(msg)
         if(len(ids)>0):
             self.log("Submited %d jobs"%len(ids))
@@ -192,14 +192,14 @@ class PLMSServer(Daemon):
         if(msg.opt[0] == "NPROC"):
             if(msg.msg["n-proc"] != None):
                 self.n_proc_limit = int(msg.msg["n-proc"])
-            return_msg.msg['n-proc'] = self.n_proc_limit 
+            return_msg.msg['n-proc'] = self.n_proc_limit
         else:
             self.log("Failed to configure: unrecongnized option %s"%msg.opt[0])
             return_msg.status = "FAIL\n"
         return return_msg
 #___________________________________________________________________________________________________
     def command_REMOVE_JOBS(self, msg):
-        
+
         if(msg.opt[0] == "ALL"):
             n = self.remove_jobs(None, msg.msg["job_ids"])
             return_msg = "SUCCESS\n"
@@ -229,7 +229,7 @@ class PLMSServer(Daemon):
             n = self.remove_jobs(ids, "unkown")
             return_msg.msg['msg'] = "Stopping scheduler..."
             return_msg.msg['job_ids'] = ids
-            self.log("Stopping scheduler now!")      
+            self.log("Stopping scheduler now!")
             self.quit = True
         #Stopping the scheduler 'GENTLE' exits the scheduler when the last running job stops.
         elif(msg.opt[0] == "GENTLE"):
@@ -241,17 +241,17 @@ class PLMSServer(Daemon):
             return_msg.status = "FAIL"
             return_msg.error = "Unknown command"
         return return_msg
-    
+
 #___________________________________________________________________________________________________
     def command_PING(self, msg):
         return_msg = "SUCCESS\n"
         return_msg +=self.scheduler_name+"\n"
         return_msg +=self.host+"\n"
         return return_msg
-    
+
 #___________________________________________________________________________________________________
-    def command_REQUEST_JOBS(self, msg):        
-        '''Returns a message of the requested job or a list of requested jobs. 
+    def command_REQUEST_JOBS(self, msg):
+        '''Returns a message of the requested job or a list of requested jobs.
         '''
         return_msg = RetMessage(server = self,status = "SUCCES")
         if(msg.opt == None):
@@ -267,47 +267,46 @@ class PLMSServer(Daemon):
         '''
             Recieves requests from the client through the ipc socket
         '''
-        
         # If no message waits recv will throw an exception
         try:
             msg = self.client_socket.recv_pyobj(flags=zmq.DONTWAIT)
         except:
             return
-        
+
         self.log("Recieved command from client: %s"%msg.cmd)
         if(msg.cmd in self.commands.keys()):
             return_msg = self.commands[msg.cmd](msg)
         else:
             return_msg = "FAIL\n"
-        self.log("Returning message to client")    
+        self.log("Returning message to client")
         self.client_socket.send_pyobj(return_msg)
-        
+
 #___________________________________________________________________________________________________
     def parse_job_submit_list(self, msg):
-        
+
         self.log("Parsing job submit list")
         ids = list()
         if(msg.opt[0] == 'SIMPLE'):
             for j in msg.msg["cmd_list"]:
-               ids.append(self.add_job(j, msg.user, 
-                             self.default_log_path + str(self.id_count)+".out", 
-                             self.default_log_path + str(self.id_count)+".err", 
-                             env = msg.msg["env"], 
+               ids.append(self.add_job(j, msg.user,
+                             self.default_log_path + str(self.id_count)+".out",
+                             self.default_log_path + str(self.id_count)+".err",
+                             env = msg.msg["env"],
                              current_dir = msg.msg["wdir"],
                              shell = msg.msg["shell"]))
-            
+
         elif(msg.opt[0] == 'SIMPLE_LOG'):
-            log_out_path = msg.msg["log_out_path"] 
-            log_err_path = msg.msg["log_err_path"]      
+            log_out_path = msg.msg["log_out_path"]
+            log_err_path = msg.msg["log_err_path"]
             for j in msg_dict["cmd_list"]:
-                ids.append(self.add_job(j, msg.user, 
-                             log_out_path + str(self.id_count)+".out", 
+                ids.append(self.add_job(j, msg.user,
+                             log_out_path + str(self.id_count)+".out",
                              log_err_path + str(self.id_count)+".err",
-                             env = msg.msg["env"], 
+                             env = msg.msg["env"],
                              current_dir = msg.msg["current_dir"],
                              shell = msg.msg["shell"]))
         elif(msg.opt[0] == 'JOB_DESCRIPTION'):
-            log_out = msg.msg["outlog"] 
+            log_out = msg.msg["outlog"]
             log_err = msg.msg["errlog"]
             cmd = msg.msg["executable"]
             cmd += " "+msg.msg["args"]
@@ -338,18 +337,18 @@ class PLMSServer(Daemon):
                 current_dir,
                 shell)
         self.queue.append(job)
-        self.all_jobs[self.id_count] = job        
+        self.all_jobs[self.id_count] = job
         self.id_count +=1
-        return self.id_count-1 
-#___________________________________________________________________________________________________    
+        return self.id_count-1
+#___________________________________________________________________________________________________
     def remove_jobs(self, ids, user):
-        
+
         n_jobs_removed = 0
-        
+
         terminated = list()
         removed = list()
         not_removed = list()
-        
+
         if(ids == None):
             n_jobs_removed = len(self.queue)
             for j in self.queue:
@@ -357,7 +356,7 @@ class PLMSServer(Daemon):
                 j.end_time = time.time()
                 j.cpu_time = float("nan")
             self.queue = list()
-            
+
             for j in self.jobs:
                 j[0].terminate()
                 j[1].status = "terminated"
@@ -378,9 +377,9 @@ class PLMSServer(Daemon):
                     j.cpu_time = float("nan")
                     self.finished_jobs.append(j)
                     n_jobs_removed +=1
-                    
+
             self.queue = queue
-            
+
         jobs = list()
         for j in self.jobs:
             if(j[1].id not in ids):
@@ -399,14 +398,14 @@ class PLMSServer(Daemon):
                 self.log("Removed job %d"%j[1].id)
             self.jobs = jobs
         return n_jobs_removed
- #___________________________________________________________________________________________________   
+ #___________________________________________________________________________________________________
     def pause_jobs(self, ids, user):
         jobs2pause = list()
         for j in list(self.jobs):
             if(j.id in ids):
                 pass
-              
-#___________________________________________________________________________________________________    
+
+#___________________________________________________________________________________________________
     def shuffle_queue(self):
         pass
 #___________________________________________________________________________________________________
@@ -423,18 +422,18 @@ class PLMSServer(Daemon):
                 message = self.job_socket.recv(flags=zmq.DONTWAIT)
             except:
                 break
-                
+
             #send back an 'OK'
             self.job_socket.send("OK")
             lines = message.splitlines()
             #print(lines)
             job_id = int(lines[0])
             self.job_finish_status += [(job_id,lines[1:])]
-                    
+
         for j in self.jobs:
             for s in self.job_finish_status:
                 if(not j[0].is_alive() and j[1].id == s[0]):
-                    
+
                     #print(self.job_finish_status)
                     #print(j[1].end_time)
                     j[1].exit_status = int(parse(s[1], "Status"))
@@ -448,7 +447,7 @@ class PLMSServer(Daemon):
                     self.finished_jobs.append(j[1])
                     self.jobs.remove(j)
                     self.job_finish_status.remove(s)
-                    
+
         #If the length of the job list is shorter than the n_proc limit and there are more jobs in the
         #queue, new jobs should be added to the job list and be started
         while(len(self.jobs) < self.n_proc_limit and len(self.queue) > 0 and not self.quit):
@@ -460,32 +459,30 @@ class PLMSServer(Daemon):
 #___________________________________________________________________________________________________
     def run(self):
         '''The run method is where the main loop is
-            
+
         '''
         self.log("Starting scheduler")
         self.hold_output = False
         print(self.log_output)
         self.init_sockets()
-        
+
         while(not self.quit or len(self.jobs)>0):
             time.sleep(0.3)
-
             self.recv_commands()
-            
+
             self.check_jobs()
             sys.stdout.flush()
-            sys.stderr.flush()      
-#___________________________________________________________________________________________________        
+            sys.stderr.flush()
+#___________________________________________________________________________________________________
     def finish(self):
         '''The finish method is called at exit.
-        This method should clean and save the current state of the scheduler. 
-        
+        This method should clean and save the current state of the scheduler.
+
         '''
         self.log("Saving state")
         state = dict()
         state["queue"] = self.queue
         state["finished"] = self.finished_jobs
         state["id_count"] = self.id_count
-        state["all_jobs"] = self.all_jobs  
+        state["all_jobs"] = self.all_jobs
         pickle.dump(state, open(self.statistics_file, 'wb'))
-        
