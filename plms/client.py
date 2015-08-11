@@ -402,6 +402,9 @@ class Client(object):
         if(parse_opt(opt,'h')):
             print(bcolors.BOLD+"usage: job [job id] [options]"+bcolors.ENDC)
             print(bcolors.BOLD+"    -s  "+bcolors.ENDC+"    providing format string")
+            print(bcolors.BOLD+"    -i  "+bcolors.ENDC+"    shortcut to print out the job id")
+            print(bcolors.BOLD+"    -c  "+bcolors.ENDC+"    shortcut to print out the job command")
+            print(bcolors.BOLD+"    -t  "+bcolors.ENDC+"    shortcut to print out the job runtime ")
             print(bcolors.BOLD+"format string keys:"+bcolors.ENDC)
             #print("'log 23 -eo' :shows the out log as well as the error log of the job with id 23")
 
@@ -416,10 +419,17 @@ class Client(object):
                 #print(k)
             return
 
+        format_str = ''
         #TODO: add more shortcuts
         #Shortcut for returning the job command
+        if(parse_opt(opt,'i') or len(opt) == 1):
+            format_str += bc.bold(" Id: ")+"%(id)s"
         if(parse_opt(opt,'c') or len(opt) == 1):
-            format_str = "%(cmd)s\n"
+            format_str += bc.bold(" Command: ")+"%(cmd)s"
+        if(parse_opt(opt,'t') or len(opt) == 1):
+            format_str += bc.bold(" Run time: ")+"%(run_time)s"
+
+        format_str += '\n'
 
         if(utils.is_integer(opt[0])):
             job, msg = self.scheduler_client.request_job(int(opt[0]))
