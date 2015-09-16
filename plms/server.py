@@ -317,9 +317,11 @@ class PLMSServer(Daemon):
 #___________________________________________________________________________________________________
     def log(self, msg):
         '''This function provides basic log functionallity for the server'''
+        import ntpath
+
         frame,filename,line_number,function_name,lines,index=\
         inspect.getouterframes(inspect.currentframe())[1]
-        s = datetime.now().strftime('%Y-%m-%d %H:%M:%S')+" %s:%d in %s :  %s"%(filename,line_number,function_name,msg)
+        s = datetime.now().strftime('%Y-%m-%d %H:%M:%S')+" %s:%d in %s :  %s"%(ntpath.basename(filename),line_number,function_name,msg)
         if(self.hold_output):
             self.log_output += s+"\n"
         else:
