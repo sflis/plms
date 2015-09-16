@@ -14,26 +14,12 @@ from utils import bcolors
 #===================================================================================================
 
 class SchedulerClient(object):
-    def __init__(self, url,tcp_port, local=True):
+
+    def __init__(self, socket_name):
+
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)
-        if(local):
-            self.socket.connect("tcp://127.0.0.1:%s"%tcp_port)
-        else:
-            #try:
-                #server_name = url.split("@")[0]+"@"+canIHasIP(url.split("@")[1],3)
-            #except e:
-                #raise(e)
-                #return
-            #server_name = url.split("@")[0]+"@"+socket.gethostbyname(url.split("@")[1])
-            server_name = DNSResolve(url)
-            print(server_name)
-            try:
-                #self.socket.connect("tcp://%s:%s"%(server_name,tcp_port))
-                self.tunnel = ssh.tunnel_connection(self.socket,"tcp://127.0.0.1:%s"%tcp_port, server_name, timeout=3)
-            except e:
-                raise(e)
-                return
+        self.socket.connect("ipc://"+socket_name)
         self.socket.setsockopt(zmq.LINGER, 0)
 
         self.poller = zmq.Poller()

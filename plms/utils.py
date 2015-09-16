@@ -41,7 +41,9 @@ def parse(string_list, parse_string, n = 0, separator=':',complete_line = False)
 
 #===================================================================================================
 def parse_opt(opt_list,opt):
+
     '''Not really a parser. Checks if an option 'opt' key is in the opt_list.
+
         The assumption is that options keys are prefixed with a '-'.
     '''
     ret = False

@@ -76,6 +76,7 @@ class Job(object):
         return  format_str%self.prop_dict
 
 
+
 selection_keys = [k for k in Job.statstr_2_id.keys()]#+['job_id']
 #===================================================================================================
 class StatusSelector(object):
@@ -118,7 +119,6 @@ def parse_selection_expr(expr, job_list, ids):
             #dynamically create a variable matching the selection
             #key
             exec("%s = np.array(job_ids)"%k)
-
             if(expr==k):
                 expr = expr+'=='+expr
             mask = eval(expr)

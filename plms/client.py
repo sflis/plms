@@ -12,10 +12,11 @@ from SchedulerClient import SchedulerClient
 import utils
 from utils import parse_opt,parse_arg, bcolors, colors
 from utils import bcolors as bc
+
 from job import Job, parse_selection_expr
 import job
+SchedulerInfo = collections.namedtuple("SchedulerInfo","name, socket_path, tcp_port, host")
 
-SchedulerInfo = collections.namedtuple("SchedulerInfo","name, tcp_addr, tcp_port, host")
 class Client(object):
 
     def __init__(self, path_here):
@@ -25,12 +26,14 @@ class Client(object):
         self.conf_file = open(os.path.join(path_here,"plms.conf"),'r')
 
         conf = self.conf_file.readlines()
+        self.socket_path = utils.parse(conf,"socket_path")
         self.conf_path = utils.parse(conf,"conf_path")
         self.conf_path_client = utils.parse(conf,"conf_path_client")
         self.state_file = os.path.join(self.conf_path_client, self.client_name+".pkl")
         self.current_scheduler = None
         self.available_schedulers = dict()
         self.load_state()
+
 
         self.pre_cmd =  {'cs'          :(self.pre_cmd_change_sch,        'change scheduler'),
                          'as'          :(self.pre_cmd_get_available_sch, 'list available schedulers'),
@@ -61,9 +64,10 @@ class Client(object):
         '''
         if(not os.path.isfile(self.state_file)):
             print("No state file found...")
-            print("Falling back to local a scheduler:'%s'"%socket.gethostname())
-            self.current_scheduler = SchedulerInfo(socket.gethostname(),"127.0.0.1","5555",socket.gethostname())
-            self.available_schedulers["%s:%s"%(self.current_scheduler.tcp_addr,self.current_scheduler.name)] = self.current_scheduler
+            default_scheduler = socket.gethostname()+"_at_"+socket.gethostname()
+            print("Falling back to local a scheduler:'%s'"%default_scheduler)
+            self.current_scheduler = SchedulerInfo(socket.gethostname(),self.socket_path,"----",socket.gethostname())
+            self.available_schedulers[default_scheduler] = self.current_scheduler
             return
         state = pickle.load(open(self.state_file))
         self.current_scheduler = state["current_scheduler"]
@@ -77,12 +81,13 @@ class Client(object):
         pickle.dump(state, open(self.state_file, 'wb'))
 #___________________________________________________________________________________________________
     def initialize_socket(self):
-        s = "%s:%s"%(self.current_scheduler.tcp_addr,self.current_scheduler.name)
-        s = self.available_schedulers[s]
-        if(s.tcp_addr  == "127.0.0.1"):
-            self.scheduler_client = SchedulerClient(s.tcp_addr,s.tcp_port)
-        else:
-            self.scheduler_client = SchedulerClient(s.tcp_addr,s.tcp_port, local = False)
+        s_name = "%s_at_%s"%(self.current_scheduler.host,self.current_scheduler.name)
+        s = self.available_schedulers[s_name]
+        #if(s.tcp_addr  == "127.0.0.1"):
+            #self.scheduler_client = SchedulerClient(s.tcp_addr,s.tcp_port)
+        #else:
+            #self.scheduler_client = SchedulerClient(s.tcp_addr,s.tcp_port, local = False)
+        self.scheduler_client = SchedulerClient(s.socket_path+"/plms_client_"+s_name)
 #___________________________________________________________________________________________________
     def test_connection(self):
         pass
@@ -243,6 +248,7 @@ class Client(object):
                     s += bc.bold(" %d"%i)
                 print(s)
 
+
 #___________________________________________________________________________________________________
     def cmd_submit(self,arg, opt):
         if(opt == None):
@@ -290,7 +296,7 @@ class Client(object):
 #___________________________________________________________________________________________________
     def cmd_ping(self,arg, opt):
         (name,host,dt) = self.scheduler_client.ping()
-        print("Ping: %s,  %f ms"%(self.current_scheduler.tcp_addr,dt*1e3))
+        print("Ping: %f ms"%(dt*1e3))
         print("Host: %s, Name: %s"%(host,name))
 #___________________________________________________________________________________________________
     def cmd_submit_jdf(self, arg, opt):
@@ -419,6 +425,7 @@ class Client(object):
                 #print(k)
             return
 
+
         format_str = ''
         #TODO: add more shortcuts
         #Shortcut for returning the job command
@@ -430,15 +437,6 @@ class Client(object):
             format_str += bc.bold(" Run time: ")+"%(run_time)s"
 
         format_str += '\n'
-
-        if(utils.is_integer(opt[0])):
-            job, msg = self.scheduler_client.request_job(int(opt[0]))
-            jobs = {job.id:job}
-            ids = [job.id]
-        else:
-            jobs, msg = self.scheduler_client.request_job()
-            ids = parse_selection_expr(opt[0],[v for k,v in jobs.items()],jobs.keys())
-
         #extract format string from option/argument list
         if(parse_opt(opt,'s')):
             c, index = parse_arg(opt,'s')
@@ -454,8 +452,8 @@ class Client(object):
             print(s) #suppress extra new line at the end
         else:
             print(s)
-#___________________________________________________________________________________________________
 
+#___________________________________________________________________________________________________
     def print_help(self):
         usage = bcolors.BOLD+'usage: plms [command] [command arguments]'+bcolors.ENDC+'\n'
         usage +='      valid commands are:\n'
@@ -530,8 +528,6 @@ def print_queue(jobs, select = None, format_str = None, message = None):
                 printed_queue += job.formated_output(format_str)
 
         return printed_queue
-
-
 
 
 #===================================================================================================
