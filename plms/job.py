@@ -197,10 +197,6 @@ def job_process(socket_name, job_description):
     socket.connect("ipc://"+socket_name)
     #compose message
     msg = str(job_description.id)+"\n"
-    #if(failed):
-        #status = 0
-    #else:
-        #status = 1
     msg += "Status: "+str(return_code)+"\n"
     msg += "Start time: "+str(start_time)+"\n"
     msg += "End time: "+str(finish_time)+"\n"
