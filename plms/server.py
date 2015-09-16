@@ -162,15 +162,8 @@ class PLMSServer(Daemon):
         self.context = zmq.Context()
         self.client_socket = self.context.socket(zmq.REP)
         self.job_socket = self.context.socket(zmq.REP)
-<<<<<<< HEAD
-        self.log("Binding to client socket: tcp://%s:%s"%(self.tcp_addr,self.tcp_port))
-        self.client_socket.bind("tcp://%s:%s"%(self.tcp_addr,self.tcp_port))
-=======
-        #self.log("Binding to client socket: tcp://%s:%s"%(self.tcp_addr,self.tcp_port))
-        #self.client_socket.bind("tcp://%s:%s"%(self.tcp_addr,self.tcp_port))
         self.log("Binding to client socket: ipc://%s"%(self.client_socket_name))
         self.client_socket.bind("ipc://%s"%(self.client_socket_name))
->>>>>>> remove_tcp
         self.log("Binding to jobb socket: ipc://"+self.job_socket_name)
         self.job_socket.bind("ipc://"+self.job_socket_name)
 
