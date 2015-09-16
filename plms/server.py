@@ -155,8 +155,8 @@ class PLMSServer(Daemon):
             self.all_jobs = state["all_jobs"]
 #___________________________________________________________________________________________________
     def init_sockets(self):
-        ''' Initializes and binds to sockets for client-server communication (tcp socket) and
-            job-server communication (ipc socket).
+        ''' Initializes and binds to sockets for client-server communication and
+            job-server communication (ipc sockets).
         '''
         self.log("Initilizing sockets")
         self.context = zmq.Context()
