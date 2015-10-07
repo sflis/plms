@@ -2,6 +2,35 @@
 
 import sys, os, time, atexit
 from signal import SIGTERM
+import errno
+
+def pid_exists(pid):
+    """Check whether pid exists in the current process table.
+    UNIX only.
+    """
+    if(pid < 0):
+        return False
+    if(pid == 0):
+        # According to "man 2 kill" PID 0 refers to every process
+        # in the process group of the calling process.
+        # On certain systems 0 is a valid PID but we have no way
+        # to know that in a portable fashion.
+        raise ValueError('invalid PID 0')
+    try:
+        os.kill(pid, 0)
+    except OSError as err:
+        if(err.errno == errno.ESRCH):
+            # ESRCH == No such process
+            return False
+        elif(err.errno == errno.EPERM):
+            # EPERM clearly means there's a process to deny access to
+            return True
+        else:
+            # According to "man 2 kill" possible error values are
+            # (EINVAL, EPERM, ESRCH)
+            raise
+    else:
+        return True
 
 class Daemon:
     """
@@ -38,7 +67,7 @@ class Daemon:
         # do second fork
         try:
             pid = os.fork()
-            if pid > 0:
+            if(pid > 0):
                 # exit from second parent
                 sys.exit(0)
         except OSError, e:
@@ -73,8 +102,8 @@ class Daemon:
         except IOError:
             pid = None
 
-        if pid:
-            message = "pidfile %s already exist. Daemon already running?\n"
+        if(pid_exists(pid)):
+            message = "pid %s already exist. Daemon already running?\n"
             sys.stderr.write(message % self.pidfile)
             sys.exit(1)
 
@@ -113,7 +142,7 @@ class Daemon:
                 if os.path.exists(self.pidfile):
                     os.remove(self.pidfile)
             else:
-                print str(err)
+                print(str(err))
                 sys.exit(1)
 
     def restart(self):
