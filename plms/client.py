@@ -437,6 +437,15 @@ class Client(object):
             format_str += bc.bold(" Run time: ")+"%(run_time)s"
 
         format_str += '\n'
+
+        if(utils.is_integer(opt[0])):
+            job, msg = self.scheduler_client.request_job(int(opt[0]))
+            jobs = {job.id:job}
+            ids = [job.id]
+        else:
+            jobs, msg = self.scheduler_client.request_job()
+            ids = parse_selection_expr(opt[0],[v for k,v in jobs.items()],jobs.keys())
+
         #extract format string from option/argument list
         if(parse_opt(opt,'s')):
             c, index = parse_arg(opt,'s')
