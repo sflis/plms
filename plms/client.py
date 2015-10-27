@@ -83,10 +83,6 @@ class Client(object):
     def initialize_socket(self):
         s_name = "%s_at_%s"%(self.current_scheduler.host,self.current_scheduler.name)
         s = self.available_schedulers[s_name]
-        #if(s.tcp_addr  == "127.0.0.1"):
-            #self.scheduler_client = SchedulerClient(s.tcp_addr,s.tcp_port)
-        #else:
-            #self.scheduler_client = SchedulerClient(s.tcp_addr,s.tcp_port, local = False)
         self.scheduler_client = SchedulerClient(s.socket_path+"/plms_client_"+s_name)
 #___________________________________________________________________________________________________
     def test_connection(self):
@@ -163,7 +159,6 @@ class Client(object):
         else:
             jobs, msg = self.scheduler_client.request_job()
             ids = parse_selection_expr(opt[0],[v for k,v in jobs.items()],jobs.keys())
-            #job, msg = self.scheduler_client.request_job(int(opt[0]))
         ret_ids = list()
 
         for i in ids:
