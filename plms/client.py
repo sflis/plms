@@ -151,14 +151,9 @@ class Client(object):
             #print(bcolors.BOLD+"    now  "+bcolors.ENDC+"    Terminates running jobs and shuts down scheduler.")
             #print(bcolors.BOLD+"    gentle  "+bcolors.ENDC+" Shuts down the scheduler after the currently runnings jobs have finnished.")
             return
+        jobs, msg = self.scheduler_client.request_job()
+        ids = utils.extract_job_id(opt,jobs)
 
-        if(utils.is_integer(opt[0])):
-            job, msg = self.scheduler_client.request_job(int(opt[0]))
-            jobs = {job.id:job}
-            ids = [job.id]
-        else:
-            jobs, msg = self.scheduler_client.request_job()
-            ids = parse_selection_expr(opt[0],[v for k,v in jobs.items()],jobs.keys())
         ret_ids = list()
 
         for i in ids:
@@ -225,14 +220,8 @@ class Client(object):
             if(yn == "yes"):
                 self.scheduler_client.remove_jobs(None)
         else:
-            ids = list()
-            jobs, message = self.scheduler_client.request_job()
-            for a in opt:
-                #If argument is a number interpret as job id
-                if(utils.is_integer(a)):
-                    ids.append(int(a))
-                else:
-                    ids += list(parse_selection_expr(a,[v for k,v in jobs.items()],jobs.keys()))
+            jobs, msg = self.scheduler_client.request_job()
+            ids = utils.extract_job_id(opt,jobs)
             if(len(ids)<1):
                 print(bc.gen('No jobs found to be removed', bc.OKBLUE))
                 return
@@ -299,9 +288,6 @@ class Client(object):
         if(parse_opt(opt,'h')):
             print(bcolors.BOLD+"usage: submit-jdf [input] [options]"+bcolors.ENDC)
             print(bcolors.BOLD+"    -f  "+bcolors.ENDC+"    input interpreted as a file containing paths to jdl files (not implemented yet)")
-            #print(bcolors.BOLD+"    -l   "+bcolors.ENDC+"   running jobs")
-            #print(bcolors.BOLD+"example:"+bcolors.ENDC)
-            #print("'q -rq' :shows the queued and running jobs")
             return
         jdf_file = open(opt[0],'r')
         jdf = jdf_file.readlines()
@@ -399,6 +385,7 @@ class Client(object):
 #___________________________________________________________________________________________________
     def cmd_job(self, arg, opt):
         from job import Job
+        import utils
         import time
         if(parse_opt(opt,'h')):
             print(bcolors.BOLD+"usage: job [job id] [options]"+bcolors.ENDC)
@@ -414,10 +401,6 @@ class Client(object):
             j.update(time.time())
             for k in j.prop_dict.keys():
                 print(bcolors.BOLD+"    %s"%k+bcolors.ENDC)
-            #print(j.prop_dict)
-            #props = props[j.prop_dict]
-            #for k in props:
-                #print(k)
             return
 
 
@@ -432,14 +415,8 @@ class Client(object):
             format_str += bc.bold(" Run time: ")+"%(run_time)s"
 
         format_str += '\n'
-
-        if(utils.is_integer(opt[0])):
-            job, msg = self.scheduler_client.request_job(int(opt[0]))
-            jobs = {job.id:job}
-            ids = [job.id]
-        else:
-            jobs, msg = self.scheduler_client.request_job()
-            ids = parse_selection_expr(opt[0],[v for k,v in jobs.items()],jobs.keys())
+        jobs, msg = self.scheduler_client.request_job()
+        ids = utils.extract_job_id(opt,jobs)
 
         #extract format string from option/argument list
         if(parse_opt(opt,'s')):

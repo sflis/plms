@@ -64,6 +64,19 @@ def parse_arg(opt_list,opt):
                 return True,index
         index +=1
     return False, 0
+#===================================================================================================
+def extract_job_id(arg_list, jobs):
+    from job import parse_selection_expr
+    ids = []
+    for a in arg_list:
+        #If argument is a number interpret as job id
+        if(is_integer(a)):
+            ids.append(int(a))
+        elif('-' in a):
+            continue
+        else:
+            ids += list(parse_selection_expr(a,[v for k,v in jobs.items()],jobs.keys()))
+    return ids
 
 #===================================================================================================
 def is_integer(s):
