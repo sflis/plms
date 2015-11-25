@@ -393,6 +393,7 @@ class Client(object):
             print(bcolors.BOLD+"    -i  "+bcolors.ENDC+"    shortcut to print out the job id")
             print(bcolors.BOLD+"    -c  "+bcolors.ENDC+"    shortcut to print out the job command")
             print(bcolors.BOLD+"    -t  "+bcolors.ENDC+"    shortcut to print out the job runtime ")
+            print(bcolors.BOLD+"    -d  "+bcolors.ENDC+"    shortcut to dump all job info (overides all other options)")
             print(bcolors.BOLD+"format string keys:"+bcolors.ENDC)
             #print("'log 23 -eo' :shows the out log as well as the error log of the job with id 23")
 
@@ -403,7 +404,7 @@ class Client(object):
                 print(bcolors.BOLD+"    %s"%k+bcolors.ENDC)
             return
 
-
+        dump = False
         format_str = ''
         #TODO: add more shortcuts
         #Shortcut for returning the job command
@@ -413,11 +414,21 @@ class Client(object):
             format_str += bc.bold(" Command: ")+"%(cmd)s"
         if(parse_opt(opt,'t') or len(opt) == 1):
             format_str += bc.bold(" Run time: ")+"%(run_time)s"
+        if(parse_opt(opt,'d') or len(opt) == 1):
+            dump = True
 
         format_str += '\n'
         jobs, msg = self.scheduler_client.request_job()
         ids = utils.extract_job_id(opt,jobs)
-
+        if(dump):
+            for i in ids:
+                j = jobs[i]
+                j.update(time.time())
+                print((utils.queued("<===job ")+bc.bold("%d")+" DUMP:"+utils.queued("===================>"))%i)
+                for p in utils.get_object_prop(j):
+                    if(p not in ["statstr_2_id", "statid_2_str"]):
+                            print((bc.bold("%s:")+" %s")%(p,j.__dict__[p]))
+            return
         #extract format string from option/argument list
         if(parse_opt(opt,'s')):
             c, index = parse_arg(opt,'s')
@@ -429,6 +440,7 @@ class Client(object):
         for i in ids:
             jobs[i].update(time.time())
             s += jobs[i].formated_output(format_str).decode('string_escape')
+
         if("\n" == s[-1]):
             print(s) #suppress extra new line at the end
         else:
