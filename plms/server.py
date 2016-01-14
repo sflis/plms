@@ -433,6 +433,7 @@ class PLMSServer(Daemon):
             job_id = int(lines[0])
             self.job_finish_status += [(job_id,lines[1:])]
 
+        #Removing finished jobs from running list
         for j in self.jobs:
             for s in self.job_finish_status:
                 if(not j[0].is_alive() and j[1].id == s[0]):
@@ -454,11 +455,22 @@ class PLMSServer(Daemon):
         #If the length of the job list is shorter than the n_proc limit and there are more jobs in the
         #queue, new jobs should be added to the job list and be started
         while(len(self.jobs) < self.n_proc_limit and len(self.queue) > 0 and not self.quit):
+
             queued_job = self.queue.pop(0)
+            self.log("Starting job %d"%queued_job.id)
             queued_job.status = "running"
             queued_job.start_time = time.time()
             self.jobs.append( (Process(target=job_process, args=(self.job_socket_name, queued_job)),queued_job))
             self.jobs[-1][0].start()
+            # If no message waits recv will throw an exception
+            #try:
+            message = self.job_socket.recv_pyobj()#flags=zmq.DONTWAIT)
+            self.log("recived back message from job %d with pid %d"%(message['id'],message['pid']))
+            queued_job.pid = message['pid']
+            self.job_socket.send_pyobj("OK")
+            #self.jobs[-1][0].
+            #except:
+            #    break
 #___________________________________________________________________________________________________
     def run(self):
         '''The run method is where the main loop is

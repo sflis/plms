@@ -250,7 +250,7 @@ class Client(object):
                 env = None
             else:
                 env = os.environ
-            return_msg = self.scheduler_client.submit_simple_jobs([opt[0]], env = env, wdir = os.getcwd(), user = os.environ['USER'])
+            return_msg = self.scheduler_client.submit_simple_jobs([opt[0]], env = env, wdir = os.getcwd(), user = os.environ['USER'], shell = True)
 
 
         if(return_msg.status == "FAIL"):

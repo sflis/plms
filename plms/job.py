@@ -29,7 +29,8 @@ class Job(object):
         self.shell = shell
         self.compress_cmd = 100
         self.exit_status = 0
-
+        self.pid =None
+        self.childpids = None
     def update(self,time):
         '''Updates the job statistics with respect to a given time.
 
@@ -128,7 +129,7 @@ def parse_selection_expr(expr, job_list, ids):
     return eval("ids[mask]")
 #==============================================================================
 
-def job_process(socket_name, job_description):
+def job_process2(socket_name, job_description):
     '''This function wraps the job command to be executed.
 
        It executes the command found in the job_description and redirects all
@@ -208,3 +209,91 @@ def job_process(socket_name, job_description):
     #good bye
 
 #=====================================================================================================
+def job_process(socket_name, job_description):
+    '''This function wraps the job command to be executed.
+
+       It executes the command found in the job_description and redirects all
+       output according to the job_description to the appropriate log files.
+       It is also responsible to monitor the execution (NOTE:not completely
+       implemented yet) and notify the scheduler once the job has finished
+       execution.
+
+       arguments:
+       socket_name     -- ipc socket path to the scheduler job socket
+       job_description -- a Job object
+    '''
+    import sys
+    import os
+    import time
+    import zmq
+    from subprocess import call
+    import subprocess
+    from multiprocessing import Process
+
+    #import dl
+    #libc = dl.open('/lib/libc.so.6')
+    #libc.call('prctl', 15,job_description.cmd , 0, 0, 0)
+
+    # redirect standard file descriptors to log files
+    sys.stdout.flush()
+    sys.stderr.flush()
+
+    so = file(job_description.log_out, 'w')
+    se = file(job_description.log_err, 'w')
+
+    os.dup2(so.fileno(), sys.stdout.fileno())
+    os.dup2(se.fileno(), sys.stderr.fileno())
+
+    #setting the enviroment for the job
+    if(job_description.env != None):
+        os.environ.update(job_description.env)
+
+    if(job_description.wdir != None):
+        os.chdir(job_description.wdir)
+    else:
+        job_description.wdir='/'
+    print("Job Wrapper: Start job %d with name %s"%(job_description.id,job_description.name))
+    wrapper_pid = os.getpid()
+    print("Job Wrapper: %d"%wrapper_pid)
+
+    #Set up sockets to communcate with the scheduler
+    context = zmq.Context()
+    socket = context.socket(zmq.REQ)
+    socket.connect("ipc://"+socket_name)
+
+    msg = {'id':job_description.id,'pid':wrapper_pid}
+    socket.send_pyobj(msg)
+    msg = socket.recv_pyobj()
+
+    # launch the job
+    failed = False
+    try:
+        if(job_description.shell):
+            start_time = time.time()
+            return_code = subprocess.call(job_description.cmd, cwd=job_description.wdir, shell=True) #,cwd=job_description.current_dir
+        else:
+            start_time = time.time()
+            return_code = subprocess.call(job_description.cmd.split(), cwd=job_description.wdir, shell=False)
+    except:
+        failed = True
+        return_code = -1
+    print("Job Wrapper: Return code: %d"%return_code)
+
+    cpu_time = time.clock()
+    finish_time = time.time()
+    if(return_code !=0):
+        failed = True
+
+
+
+    #compose message
+    msg = str(job_description.id)+"\n"
+    msg += "Status: "+str(return_code)+"\n"
+    msg += "Start time: "+str(start_time)+"\n"
+    msg += "End time: "+str(finish_time)+"\n"
+    msg += "CPU time: "+str(cpu_time)+"\n"
+    #communicate back the status
+    socket.send(msg)
+
+    msg = socket.recv()
+    #good bye
