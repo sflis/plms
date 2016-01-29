@@ -11,7 +11,7 @@ class Job(object):
     statstr_2_id = {"idle":0,"running":10,"held":20,"finished":30,"terminated":40,"removed":50,"failed":60}
     statid_2_str = {0:"idle",10:"running",20:"held",30:"finished",40:"terminated",50:"removed",60:"failed"}
 
-    def __init__(self, id, cmd, submit_time, user, log_out='/dev/null', log_err='/dev/null', env = None, name = '', wdir = None, shell = False):
+    def __init__(self, id, cmd, submit_time, user, log_out='/dev/null', log_err='/dev/null', env = None, name = '', wdir = None, shell = False,cmd_length=100):
         self.id = id
         self.cmd = cmd
         self.status = "idle"
@@ -27,7 +27,7 @@ class Job(object):
         self.name = name
         self.wdir = wdir
         self.shell = shell
-        self.compress_cmd = 100
+        self.compress_cmd = cmd_length
         self.exit_status = 0
         self.pid =None
         self.childpids = None

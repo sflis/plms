@@ -463,6 +463,8 @@ def print_queue(jobs, select = None, format_str = None, message = None):
         import time
         now = time.time()
         tot_running_time = 0
+        (width, height) = utils.getTerminalSize()
+        cmd_length = width-60
 
         if(select == None):
             def select(job):
@@ -474,6 +476,7 @@ def print_queue(jobs, select = None, format_str = None, message = None):
             running_time_str_ = r"%(run_time_days)02dd  %(run_time_hours)02d:%(run_time_minutes)02d:%(run_time_seconds)05.2fh"
 
             for jid,job in jobs.items():
+                job.compress_cmd = cmd_length
                 if(select(job)):
                     continue
                 if(job.status == "finished" or job.status == "failed" or job.status == "terminated"):
@@ -493,7 +496,7 @@ def print_queue(jobs, select = None, format_str = None, message = None):
 
                 submited_time = time.strftime("%Y-%m-%d %H:%M:%S",job.submit_time)
 
-                format_str = bc.bold("%(id)06d")+":"+colors[job.status]("%(status)10s")+": "+submited_time+" : "+bc.gen(running_time_str,bc.CYAN)+": %(cmdc)0.100s\n"
+                format_str = bc.bold("%(id)06d")+":"+colors[job.status]("%(status)10s")+": "+submited_time+" : "+bc.gen(running_time_str,bc.CYAN)+": %(cmdc)s\n"
                 printed_queue += job.formated_output(format_str)
 
 
