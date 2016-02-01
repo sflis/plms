@@ -108,16 +108,18 @@ class Client(object):
 #___________________________________________________________________________________________________
     def cmd_print_queue(self,arg, opt):
         format_str = None
+        N = 0
         if(opt == None):
             sel = job.StatusSelector(["idle","running"])
         else:
             if(parse_opt(opt,'h')):
-                print(bcolors.BOLD+"usage: q [options]"+bcolors.ENDC)
-                print(bcolors.BOLD+"    -f  "+bcolors.ENDC+"    finished jobs")
-                print(bcolors.BOLD+"    -r   "+bcolors.ENDC+"   running jobs")
-                print(bcolors.BOLD+"    -q    "+bcolors.ENDC+"  queued jobs")
-                print(bcolors.BOLD+"    -s    "+bcolors.ENDC+"  format string")
-                print(bcolors.BOLD+"example:"+bcolors.ENDC)
+                print(bc.bold("usage: q [options]"))
+                print(bc.bold("    -f  ")+"    finished jobs")
+                print(bc.bold("    -r   ")+"   running jobs")
+                print(bc.bold("    -q    ")+"  queued jobs")
+                print(bc.bold("    -s    ")+"  format string")
+                print(bc.bold("    -n    ")+"  number of jobs shown")
+                print(bc.bold("example:"))
                 print("'q -rq' :shows the queued and running jobs")
                 return
             sel = job.StatusSelector()
@@ -130,19 +132,26 @@ class Client(object):
             index = 0
             for o in opt:
                 if(not parse_opt(o,'-')):
-                    if(opt[index-1] == '-s'):
+                    if(opt[index-1] == '-s' or opt[index-1] == '-n'):
                         continue
                     print(bcolors.FAIL+bcolors.BOLD+"Error: use of deprecated option syntax `%s'!!"%o+bcolors.ENDC)
                     print(bcolors.HEADER+"Instead use -r, -f or -q. See the help with 'q -h'."+bcolors.ENDC)
                     return
                 index += 1
 
+            (n,index) = parse_arg(opt,'n')
+            if(n):
+                N = int(opt[index+1])
+                if(len(sel.status_list)==0):
+                    sel.status_list = ["idle","running"]
+
             (s,index) = parse_arg(opt,'s')
+
             if(s):
                 format_str = opt[index + 1]
 
         jobs, message = self.scheduler_client.request_job()
-        print(print_queue(jobs,sel,format_str,message).decode('string_escape'))
+        print(print_queue(jobs,sel,format_str,message, N).decode('string_escape'))
 
 #___________________________________________________________________________________________________
     def cmd_resubmit(self, arg, opt):
@@ -232,6 +241,20 @@ class Client(object):
                     s += bc.bold(" %d"%i)
                 print(s)
 
+#___________________________________________________________________________________________________
+    def cmd_clean(self, arg, opt):
+
+        jobs, msg = self.scheduler_client.request_job()
+        ids = utils.extract_job_id(opt,jobs)
+        if(len(ids)<1):
+            print(bc.gen('No jobs found to be cleaned from the queue', bc.OKBLUE))
+            return
+        print(bc.gen("removed: ", bc.OKBLUE)+bc.bold(self.scheduler_client.remove_jobs(ids))+bc.gen(" jobs",bc.OKBLUE))
+        if(len(ids) <10):
+            s = bc.gen("ids:", bc.OKBLUE)
+            for i in ids :
+                s += bc.bold(" %d"%i)
+            print(s)
 
 #___________________________________________________________________________________________________
     def cmd_submit(self,arg, opt):
@@ -240,9 +263,9 @@ class Client(object):
             return
         else:
             if(parse_opt(opt,'h')):
-                print(bcolors.BOLD+"usage: submit [input] [options]"+bcolors.ENDC)
-                print(bcolors.BOLD+"    -e  "+bcolors.ENDC+"    if set the current enviroment is not passed to the job.")
-                print(bcolors.BOLD+"example:"+bcolors.ENDC)
+                print(bc.bold("usage: submit [input] [options]"))
+                print(bc.bold("    -e  ")+"    if set the current enviroment is not passed to the job.")
+                print(bc.bold("example:"))
                 print("""'submit "sleep 3"' :submits a job which executes the shell command `sleep 3'""")
                 return
 
@@ -458,8 +481,10 @@ class Client(object):
 
 
 #___________________________________________________________________________________________________
+
+
 #===================================================================================================
-def print_queue(jobs, select = None, format_str = None, message = None):
+def print_queue(jobs, select = None, format_str = None, message = None, N = 0):
         import time
         now = time.time()
         tot_running_time = 0
@@ -475,7 +500,7 @@ def print_queue(jobs, select = None, format_str = None, message = None):
             printed_queue= bcolors.BOLD+"    ID     STATUS       SUBMITED            RUNNING TIME         CMD\n"+bcolors.ENDC
             running_time_str_ = r"%(run_time_days)02dd  %(run_time_hours)02d:%(run_time_minutes)02d:%(run_time_seconds)05.2fh"
 
-            for jid,job in jobs.items():
+            for jid,job in jobs.items()[-N:]:
                 job.compress_cmd = cmd_length
                 if(select(job)):
                     continue
