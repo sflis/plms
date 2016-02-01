@@ -55,7 +55,7 @@ class Client(object):
                         'n-proc'      :(self.cmd_cn_proc,     'Configures the maximum number of simultaneous jobs'),
                         'ping'        :(self.cmd_ping,        'Pings the scheduler and returns the response time'),
                         'log'         :(self.cmd_log,         'Fast access to log files via job id number'),
-                        'job'         :(self.cmd_job,         'Fast access to job descriptions via job id number'+bc.warn(' (not fully implemented yet)'))
+                        'job'         :(self.cmd_job,         'Fast access to job descriptions via job id number'
                         }
 
 #___________________________________________________________________________________________________
