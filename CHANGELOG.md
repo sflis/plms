@@ -4,6 +4,12 @@ Release Notes - Change Log
 
 Unreleased
 --------------------------------------------------------------------------------
+Changes since v0.1.8
+
+
+
+v0.1.8 Release 2016-02-06
+--------------------------------------------------------------------------------
 Changes since v0.1.7
 
 - Added option '-n' to the queue command which sets the number of jobs to be displayed.
