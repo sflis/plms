@@ -22,6 +22,7 @@ import utils
 from utils import  parse, bcolors
 from job import Job, job_process
 from message import Message, RetMessage
+from configure_utils import get_configuration, write_configuration
 #===================================================================================================
 #++++++Class: Server++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #===================================================================================================
@@ -57,45 +58,30 @@ class PLMSServer(Daemon):
         #the configuration is read from the conf file.
         if(os.path.isfile(self.configure_file) and conf == None):
             self.log("Found configure file, loading configuration")
-            conf_file = open(self.configure_file,'r')
-            conf = conf_file.readlines()
-            socket_path =              utils.parse(conf, "socket_path")
-            logs_path =                utils.parse(conf, "logs_path")
-            self.n_proc_limit =    int(utils.parse(conf, "n_proc_limit"))
-            self.proc_time_limit = int(utils.parse(conf, "proc_time_limit"))
-            self.tcp_addr =            utils.parse(conf, "tcp_address")
-            self.tcp_port =            utils.parse(conf, "tcp_port")
-            if(utils.parse(conf, "load_state") == "True" or utils.parse(conf, "load_state") == "true"):
-                init = True
-            else:
-                init = False
+            conf = get_configuration(self.configure_file)
+            socket_path =          conf["socket_path"]
+            logs_path =            conf["logs_path"]
+            self.n_proc_limit =    conf["n_proc_limit"]
+            self.proc_time_limit = conf["proc_time_limit"]
+            self.tcp_addr =        conf["tcp_address"]
+            self.tcp_port =        conf["tcp_port"]
+            init  =                conf['load_state']
         else:
             if(conf == None):
                 print("No previous configuration found or given. Please provide PMLS configuration")
                 raise RuntimeError("No previous configuration found or given. Please provide PMLS configuration")
             self.log("No previous configuration. Generating default configuration...")
-            self.n_proc_limit = conf.n_proc_limit
-            self.proc_time_limit = conf.time_limit
-            self.tcp_addr = conf.tcp_addr
-            self.tcp_port = conf.tcp_port
-            logs_path = conf.logs_path
-            socket_path = conf.socket_path
+            self.n_proc_limit = conf['n_proc_limit']
+            self.proc_time_limit = conf['time_limit']
+            self.tcp_addr = conf['tcp_addr']
+            self.tcp_port = conf['tcp_port']
+            logs_path = conf['logs_path']
+            socket_path = conf['socket_path']
+            conf['load_state'] = False
             init = False
-            f = open(self.configure_file,'w')
-            f.write("#Micro python scheduler configuration file \n")
-            f.write("#This file was created automatically when the scheduler with this name was\n")
-            f.write("#was started for the first time. This file will be read each time the     \n")
-            f.write("#scheduler is started and the settings will be configured from this file. \n")
-            f.write("tcp_address:                                                               %s\n"%conf.tcp_addr)
-            f.write("tcp_port:                                                                 %s\n"%conf.tcp_port)
-            f.write("socket_path:                                                              %s\n"%conf.socket_path)
-            f.write("logs_path:                                                                %s\n"%conf.logs_path)
-            f.write("n_proc_limit:                                                             %d\n"%conf.n_proc_limit)
-            f.write("proc_time_limit:                                                          %d\n"%conf.time_limit)
-            f.write("load_state:                                                               %s\n"%conf.load_state)
+            write_configuration(self.configure_file,conf)
 
 
-        #self.client_socket_name = socket_path+"/pmls_client_"+scheduler_name
         #path to an ipc socket for communications with the running jobs
 
         self.job_socket_name = socket_path+"/plms_job_"+scheduler_name+"_at_"+self.host
@@ -103,7 +89,7 @@ class PLMSServer(Daemon):
         #shuts down.
         self.statistics_file = conf_path+"/plms_stat_"+scheduler_name+".pkl"
         self.client_socket_name = socket_path+"/plms_client_"+scheduler_name+"_at_"+self.host
-        self.default_log_path = os.path.join(logs_path,scheduler_name+'/')
+        self.default_log_path = os.path.expandvars(os.path.join(logs_path,scheduler_name+'/'))
         utils.ensure_dir(self.default_log_path)
 
 
