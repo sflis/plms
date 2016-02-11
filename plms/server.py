@@ -471,7 +471,7 @@ class PLMSServer(Daemon):
                 #Recovering from failing start
                 import traceback
                 j = self.jobs[-1]
-                self.log("Failed to start job %d"%j[0])
+                self.log("Failed to start job %d"%j[1].id)
                 self.log(traceback.format_exc())
                 j[1].status = 'start failed'
                 self.jobs.remove(-1)
@@ -481,7 +481,7 @@ class PLMSServer(Daemon):
                     queued_job.pid = message['pid']
                     self.job_socket.send_pyobj("OK")
                 except Exception as ef:
-                    self.log("Back communication failed to job %d"%j[0])
+                    self.log("Back communication failed to job %d"%j[1].id)
                     self.log(traceback.format_exc())
                 continue
             #except:
