@@ -99,6 +99,7 @@ class PLMSServer(Daemon):
         #path to an ipc socket for communications with the running jobs
 
         self.job_socket_name = socket_path+"/plms_job_"+scheduler_name+"_at_"+self.host
+        self.job_start_socket_name = socket_path+"/plms_job_start_"+scheduler_name+"_at_"+self.host
         #path to the file which saves the state of the scheduler server when it
         #shuts down.
         self.statistics_file = conf_path+"/plms_stat_"+scheduler_name+".pkl"
@@ -162,11 +163,13 @@ class PLMSServer(Daemon):
         self.context = zmq.Context()
         self.client_socket = self.context.socket(zmq.REP)
         self.job_socket = self.context.socket(zmq.REP)
+        self.job_start_socket = self.context.socket(zmq.REP)
         self.log("Binding to client socket: ipc://%s"%(self.client_socket_name))
         self.client_socket.bind("ipc://%s"%(self.client_socket_name))
         self.log("Binding to jobb socket: ipc://"+self.job_socket_name)
         self.job_socket.bind("ipc://"+self.job_socket_name)
-
+        self.log("Binding to jobb start socket: ipc://"+self.job_start_socket_name)
+        self.job_start_socket.bind("ipc://"+self.job_start_socket_name)
 #___________________________________________________________________________________________________
     def command_SUBMIT_JOBS(self, msg):
         ''' Processes and submits a list of jobs.
@@ -460,13 +463,13 @@ class PLMSServer(Daemon):
             self.log("Starting job %d"%queued_job.id)
             queued_job.status = "running"
             queued_job.start_time = time.time()
-            self.jobs.append( (Process(target=job_process, args=(self.job_socket_name, queued_job)),queued_job))
+            self.jobs.append( (Process(target=job_process, args=(self.job_socket_name,self.job_start_socket_name, queued_job)),queued_job))
             self.jobs[-1][0].start()
 
             # Part of a hot fix (sometimes the py_object from the starting up jobs is malformed
             # which causes pickle to throw)
             try:
-                message = self.job_socket.recv_pyobj()#flags=zmq.DONTWAIT)
+                message = self.job_start_socket.recv_pyobj()#flags=zmq.DONTWAIT)
             except Exception as e:
                 #Recovering from failing start
                 import traceback
@@ -474,12 +477,12 @@ class PLMSServer(Daemon):
                 self.log("Failed to start job %d"%j[1].id)
                 self.log(traceback.format_exc())
                 j[1].status = 'start failed'
-                self.jobs.remove(-1)
+                self.jobs.remove(j)
                 self.finished_jobs.append(j)
                 try:
                     #communicating back to open up the socket.
                     queued_job.pid = message['pid']
-                    self.job_socket.send_pyobj("OK")
+                    self.job_start_socket.send_pyobj("OK")
                 except Exception as ef:
                     self.log("Back communication failed to job %d"%j[1].id)
                     self.log(traceback.format_exc())
@@ -488,7 +491,7 @@ class PLMSServer(Daemon):
             #    break
             self.log("recived back message from job %d with pid %d"%(message['id'],message['pid']))
             queued_job.pid = message['pid']
-            self.job_socket.send_pyobj("OK")
+            self.job_start_socket.send_pyobj("OK")
             #self.jobs[-1][0].
 
 #___________________________________________________________________________________________________

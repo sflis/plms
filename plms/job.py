@@ -209,7 +209,7 @@ def job_process2(socket_name, job_description):
     #good bye
 
 #=====================================================================================================
-def job_process(socket_name, job_description):
+def job_process(socket_name,start_socket_name, job_description):
     '''This function wraps the job command to be executed.
 
        It executes the command found in the job_description and redirects all
@@ -259,12 +259,12 @@ def job_process(socket_name, job_description):
     #Set up sockets to communcate with the scheduler
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
-    socket.connect("ipc://"+socket_name)
+    socket.connect("ipc://"+start_socket_name)
 
     msg = {'id':job_description.id,'pid':wrapper_pid}
     socket.send_pyobj(msg)
     msg = socket.recv_pyobj()
-
+    #socket.close(
     # launch the job
     failed = False
     try:
@@ -285,7 +285,9 @@ def job_process(socket_name, job_description):
         failed = True
 
 
-
+    #context = zmq.Context()
+    socket = context.socket(zmq.REQ)
+    socket.connect("ipc://"+socket_name)
     #compose message
     msg = str(job_description.id)+"\n"
     msg += "Status: "+str(return_code)+"\n"
