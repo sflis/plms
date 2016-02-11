@@ -136,7 +136,7 @@ def terminated(str):
 def failed(str):
     return bcolors.bold(str,bcolors.RED)
 
-colors = {'idle':queued, 'running':running, 'finished':finished, 'terminated':terminated, 'removed':terminated,'failed':failed}
+colors = {'idle':queued, 'running':running, 'finished':finished, 'terminated':terminated, 'removed':terminated,'failed':failed,'start failed':failed}
 
 
 def getTerminalSize():

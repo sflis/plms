@@ -462,15 +462,35 @@ class PLMSServer(Daemon):
             queued_job.start_time = time.time()
             self.jobs.append( (Process(target=job_process, args=(self.job_socket_name, queued_job)),queued_job))
             self.jobs[-1][0].start()
-            # If no message waits recv will throw an exception
-            #try:
-            message = self.job_socket.recv_pyobj()#flags=zmq.DONTWAIT)
+
+            # Part of a hot fix (sometimes the py_object from the starting up jobs is malformed
+            # which causes pickle to throw)
+            try:
+                message = self.job_socket.recv_pyobj()#flags=zmq.DONTWAIT)
+            except Exception as e:
+                #Recovering from failing start
+                import traceback
+                j = self.jobs[-1]
+                self.log("Failed to start job %d"%j[0])
+                self.log(traceback.format_exc())
+                j[1].status = 'start failed'
+                self.jobs.remove(-1)
+                self.finished_jobs.append(j)
+                try:
+                    #communicating back to open up the socket.
+                    queued_job.pid = message['pid']
+                    self.job_socket.send_pyobj("OK")
+                except Exception as ef:
+                    self.log("Back communication failed to job %d"%j[0])
+                    self.log(traceback.format_exc())
+                continue
+            #except:
+            #    break
             self.log("recived back message from job %d with pid %d"%(message['id'],message['pid']))
             queued_job.pid = message['pid']
             self.job_socket.send_pyobj("OK")
             #self.jobs[-1][0].
-            #except:
-            #    break
+
 #___________________________________________________________________________________________________
     def run(self):
         '''The run method is where the main loop is

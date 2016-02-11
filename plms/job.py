@@ -8,8 +8,8 @@ class Job(object):
     '''
 
     #dictionaries to convert between the numerical and string representations of the job status
-    statstr_2_id = {"idle":0,"running":10,"held":20,"finished":30,"terminated":40,"removed":50,"failed":60}
-    statid_2_str = {0:"idle",10:"running",20:"held",30:"finished",40:"terminated",50:"removed",60:"failed"}
+    statstr_2_id = {"idle":0,"running":10,"held":20,"finished":30,"terminated":40,"removed":50,"failed":60,"start failed":70}
+    statid_2_str = {0:"idle",10:"running",20:"held",30:"finished",40:"terminated",50:"removed",60:"failed",70:"start failed"}
 
     def __init__(self, id, cmd, submit_time, user, log_out='/dev/null', log_err='/dev/null', env = None, name = '', wdir = None, shell = False,cmd_length=100):
         self.id = id
