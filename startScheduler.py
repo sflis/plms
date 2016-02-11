@@ -27,8 +27,9 @@ def main(scheduler_name = None, daemonize = False, new = False, port='5555'):
                         , 'n_proc_limit':2
                         , 'time_limit':-1
                         , 'load_state':True
-                        , 'tcp_addr':"127.0.0.1"
-                        , 'tcp_port':port}
+                        #, 'tcp_addr':"127.0.0.1"
+                        #, 'tcp_port':port
+                        }
     else:
         configuration = None
 

@@ -32,9 +32,6 @@ class PLMSServer(Daemon):
         whith the a client.
     '''
 
-
-    PMLSconf = collections.namedtuple("PMLSconf","tcp_addr, tcp_port, logs_path, n_proc_limit, time_limit, load_state, socket_path")
-
     def __init__(self,
         scheduler_name         ,#name of the scheduler
         conf_path              ,#path to the configuration file
@@ -59,13 +56,9 @@ class PLMSServer(Daemon):
         if(os.path.isfile(self.configure_file) and conf == None):
             self.log("Found configure file, loading configuration")
             conf = get_configuration(self.configure_file)
-            socket_path =          conf["socket_path"]
-            logs_path =            conf["logs_path"]
             self.n_proc_limit =    conf["n_proc_limit"]
             self.proc_time_limit = conf["proc_time_limit"]
-            self.tcp_addr =        conf["tcp_address"]
-            self.tcp_port =        conf["tcp_port"]
-            init  =                conf['load_state']
+            init =                 conf['load_state']
         else:
             if(conf == None):
                 print("No previous configuration found or given. Please provide PMLS configuration")
@@ -73,23 +66,18 @@ class PLMSServer(Daemon):
             self.log("No previous configuration. Generating default configuration...")
             self.n_proc_limit = conf['n_proc_limit']
             self.proc_time_limit = conf['time_limit']
-            self.tcp_addr = conf['tcp_addr']
-            self.tcp_port = conf['tcp_port']
-            logs_path = conf['logs_path']
-            socket_path = conf['socket_path']
             conf['load_state'] = False
             init = False
             write_configuration(self.configure_file,conf)
 
 
         #path to an ipc socket for communications with the running jobs
-
-        self.job_socket_name = socket_path+"/plms_job_"+scheduler_name+"_at_"+self.host
+        self.job_socket_name =  conf["socket_path"]+"/plms_job_"+scheduler_name+"_at_"+self.host
         #path to the file which saves the state of the scheduler server when it
         #shuts down.
         self.statistics_file = conf_path+"/plms_stat_"+scheduler_name+".pkl"
-        self.client_socket_name = socket_path+"/plms_client_"+scheduler_name+"_at_"+self.host
-        self.default_log_path = os.path.expandvars(os.path.join(logs_path,scheduler_name+'/'))
+        self.client_socket_name = conf['socket_path']+"/plms_client_"+scheduler_name+"_at_"+self.host
+        self.default_log_path = os.path.expandvars(os.path.join(conf["logs_path"],scheduler_name+'/'))
         utils.ensure_dir(self.default_log_path)
 
 
