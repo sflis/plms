@@ -486,6 +486,7 @@ class Client(object):
 #===================================================================================================
 def print_queue(jobs, select = None, format_str = None, message = None, N = 0):
         import time
+        from datetime import datetime
         now = time.time()
         tot_running_time = 0
         (width, height) = utils.getTerminalSize()
@@ -531,7 +532,7 @@ def print_queue(jobs, select = None, format_str = None, message = None, N = 0):
             s = (tot_running_time-d*(24*3600)-h*3600-m*60)
             running_time_str = "%02dd  %02d:%02d:%05.2fh"%(d,h,m,s)
             printed_queue += (bc.head("idle jobs: ")+bc.bold("%d")+bc.head(", running jobs: ")+bc.bold("%d")+bc.head(", total run time for selection: ")+bc.bold("%s")+r"\n")%(idle_count,running_count,running_time_str)
-            printed_queue += ("Scheduler: "+bc.bold("%s")+",     Host: "+bc.bold("%s"))%(message.scheduler_name,message.host)
+            printed_queue += ("Scheduler: "+bc.bold("%s")+",     Host: "+bc.bold("%s"))%(message.scheduler_name,message.host)+'   time:'+ bc.bold(' %s'%(datetime.now().strftime("%h %d,  %H:%M:%S")))
         else:
             test = Job(-1," ",now," ")
             test.update(now)
